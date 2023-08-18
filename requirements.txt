@@ -1,0 +1,4 @@
+graphviz==0.20.1
+numpy==1.25.2
+pip-chill==1.0.3
+pytest==7.4.0
