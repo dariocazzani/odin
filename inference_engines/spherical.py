@@ -2,14 +2,13 @@ import inspect
 from collections import deque
 from typing import Callable
 import random
-import os
 
 import graphviz
 
-from ops import sigmoid
-from ops import tanh
-from ops import relu
-from ops import identity
+from .ops import sigmoid
+from .ops import tanh
+from .ops import relu
+from .ops import identity
 
 class Node:
     def __init__(self, label, activation:Callable, state:float=0., bias:float=0):
@@ -25,14 +24,9 @@ class Node:
         if not callable(self._activation):
             raise ValueError("activation must be a callable function")
 
-        # Get the signature of the function
         sig = inspect.signature(self._activation)
-
-        # Check the number of parameters
         if len(sig.parameters) != 1:
             raise ValueError("activation must be a unary function")
-
-        # Check if the function can handle floats
         try:
             result = self._activation(1.0)
             if not isinstance(result, float):
@@ -78,7 +72,7 @@ class Node:
         return self._outgoing_edges
 
     def __str__(self):
-        return f"Node(label={self._label}, state={self._state})"
+        return f"Node(label={self._label}, state={self._state}, bias={self._bias})"
 
 
 class Edge:
@@ -274,7 +268,7 @@ class SphericalEngine:
             self._current_queue, self._next_queue = self._next_queue, self._current_queue
             step += 1
             if verbose:
-                print(f'Step {step}, current state: {[node.state for node in self._nodes.values()]}')
+                print(f'Step {step}, current state: {[str(node) for node in self._nodes.values()]}')
 
         output_nodes = {nid: self._nodes[nid].state for nid in self._output_node_ids}
 
