@@ -199,63 +199,78 @@ def test_behavior_5():
     
     
 def test_behavior_6():
-    weight_ab = np.random.randn()
-    weight_bc = np.random.randn()
-    weight_ca = np.random.randn()
-    adjacency_matrix = {
-        'A':  {'activation': sigmoid, 'edges': {'B': weight_ab}},
-        'B':  {'activation': sigmoid, 'edges': {'C': weight_bc}},
-        'C':  {'activation': sigmoid, 'edges': {'A': weight_ca}},
+    weight_0_1 = np.random.randn()
+    weight_1_2 = np.random.randn()
+    weight_2_0 = np.random.randn()
+    biases = {0: 0.0, 1:0.0, 2:0.0}
+    activations = {0: sigmoid, 1: sigmoid, 2: sigmoid}
+    adjacency_dict = {
+        0: {1: weight_0_1},
+        1: {2: weight_1_2},
+        2: {0: weight_2_0}
     }
     input_values = {
-        'A': np.random.rand(),
-        'B': np.random.rand(),
-        'C': np.random.rand(),
+        0: np.random.rand(),
+        1: np.random.rand(),
+        2: np.random.rand(),
     }
     graph = SphericalEngine(
-        adjacency_dict=adjacency_matrix,
-        max_steps=1)
-    result = graph.inference(verbose=True, input_values=input_values)
-    energy = result["energy_used"]
-    assert energy == 1.
+        adjacency_dict=adjacency_dict,
+        activations=activations,
+        biases=biases,
+        output_node_ids={0, 1, 2},
+        input_node_ids={0, 1, 2},
+        max_steps=1
+    )
+  
+    graph.inference(verbose=True, input_values=input_values)
+    energy = graph.energy
+    assert energy == 3
     
     graph = SphericalEngine(
-        adjacency_dict=adjacency_matrix,
-        max_steps=6)
-    result = graph.inference(verbose=True, input_values=input_values)
-    energy = result["energy_used"]
-    assert energy == 6.
+        adjacency_dict=adjacency_dict,
+        activations=activations,
+        biases=biases,
+        output_node_ids={0, 1, 2},
+        input_node_ids={0, 1, 2},
+        max_steps=6
+    )
+    graph.inference(verbose=True, input_values=input_values)
+    energy = graph.energy
+    assert energy == 18
     
     NUM_STEPS:int = 6
     graph = SphericalEngine(
-        adjacency_dict=adjacency_matrix,
-        max_steps=NUM_STEPS)
-    graph.inference(input_values=input_values)
+        adjacency_dict=adjacency_dict,
+        activations=activations,
+        biases=biases,
+        output_node_ids={0, 1, 2},
+        input_node_ids={0, 1, 2},
+        max_steps=NUM_STEPS
+    )
+    output_nodes = graph.inference(input_values=input_values)
     
-    input_a = input_values.get('A', 0.0) 
-    input_b = input_values.get('B', 0.0) 
-    input_c = input_values.get('C', 0.0)
-    node_a_activation = adjacency_matrix.get('A', {}).get('activation', callable)
-    node_b_activation = adjacency_matrix.get('B', {}).get('activation', callable)
-    node_c_activation = adjacency_matrix.get('C', {}).get('activation', callable)
+    input_0 = input_values.get(0, 0.0) 
+    input_1 = input_values.get(1, 0.0) 
+    input_2 = input_values.get(2, 0.0)
+    node_0_activation = activations.get(0, callable)
+    node_1_activation = activations.get(1, callable)
+    node_2_activation = activations.get(2, callable)
     
     next_step_a = next_step_b = next_step_c = 0
-    prev_step_a = node_a_activation(input_a)  
-    prev_step_b = node_b_activation(input_b)  
-    prev_step_c = node_c_activation(input_c)  
+    prev_step_a = node_0_activation(input_0)  
+    prev_step_b = node_1_activation(input_1)  
+    prev_step_c = node_2_activation(input_2)  
 
     for _ in range(NUM_STEPS):
         # Think of the signal from node X to node Y to need some time to propagate
-        next_step_a:float = node_a_activation(prev_step_c * weight_ca + prev_step_a)
-        next_step_b:float = node_b_activation(prev_step_a * weight_ab+ prev_step_b)
-        next_step_c:float = node_c_activation(prev_step_b * weight_bc + prev_step_c)
+        next_step_a:float = node_0_activation(prev_step_c * weight_2_0 + prev_step_a)
+        next_step_b:float = node_1_activation(prev_step_a * weight_0_1 + prev_step_b)
+        next_step_c:float = node_2_activation(prev_step_b * weight_1_2 + prev_step_c)
         prev_step_a = next_step_a
         prev_step_b = next_step_b
         prev_step_c = next_step_c
         
-    node_a:Node = cast(Node, graph._nodes.get('A', Node))
-    node_b:Node = cast(Node, graph._nodes.get('B', Node))
-    node_c:Node = cast(Node, graph._nodes.get('C', Node))
-    assert abs(node_a.state - next_step_a) < TOL
-    assert abs(node_b.state - next_step_b) < TOL
-    assert abs(node_c.state - next_step_c) < TOL
+    assert abs(output_nodes.get(0, 0.0) - next_step_a) < TOL
+    assert abs(output_nodes.get(1, 0.0) - next_step_b) < TOL
+    assert abs(output_nodes.get(2, 0.0) - next_step_c) < TOL
