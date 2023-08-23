@@ -13,13 +13,17 @@ class ColoredLogger:
         self.logger = logging.getLogger(logger_name)
         self.logger.setLevel(level)
         
-        coloredlogs.install(level=level, logger=self.logger)
+        # Custom format to include logger name but not the hostname
+        log_format = '%(asctime)s %(name)s %(levelname)s %(message)s'
+        coloredlogs.install(level=level, logger=self.logger, fmt=log_format)
 
     def get_logger(self):
         """
         Returns the initialized logger.
         """
         return self.logger
+
+
 
 # Sample usage:
 if __name__ == "__main__":
