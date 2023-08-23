@@ -111,7 +111,8 @@ class SphericalEngine:
             biases:dict[int, float],
             output_node_ids:set[int],
             input_node_ids:set[int],
-            max_steps:int=6
+            stateful:bool,
+            max_steps:int=6,
         ) -> None:
 
         self._adjacency_dict = adjacency_dict
@@ -119,6 +120,7 @@ class SphericalEngine:
         self._biases = biases
         self._output_node_ids = output_node_ids
         self._input_node_ids = input_node_ids
+        self._stateful = stateful
         self._max_steps = max_steps
         
         self._validate_inputs()
@@ -175,7 +177,8 @@ class SphericalEngine:
         if self._energy is None:
             # Dummy inference to populate energy
             input_values = {key: random.random() for key in self.input_node_ids}
-            self.inference(input_values=input_values, memory=False)
+            self.inference(input_values=input_values)
+            self.reset()
 
 
     @property
@@ -227,7 +230,7 @@ class SphericalEngine:
         self._active_nodes = deque()
 
 
-    def inference(self, input_values:dict, verbose:bool=False, memory:bool=True) -> dict:
+    def inference(self, input_values:dict, verbose:bool=False) -> dict:
         input_values = {self._nodes[label]: value for label, value in input_values.items()}
         # Create source edges for each input node
         source_edges = [Edge(Node("Source", state=value, activation=lambda x: x), node, weight=1) for node, value in input_values.items()]
@@ -276,7 +279,7 @@ class SphericalEngine:
         if verbose:
             print(f"Total energy used: {energy_used}")
         
-        if not memory:
+        if not self._stateful:
             self.reset()
         
         return output_nodes
