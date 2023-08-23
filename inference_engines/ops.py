@@ -1,5 +1,6 @@
 import numpy as np
-import math
+from enum import Enum
+import numpy as np
 
 
 UAF_NUM_PARAMS = 5
@@ -7,25 +8,38 @@ UAF_PARAMS = ['A', 'B', 'C', 'D', 'E']
 
 
 # Define activations
-def sigmoid(x:float) -> float:
-    return 1 / (1 + math.exp(-x))
+def sigmoid(x):
+    if x >= 0: return 1.0 / (1.0 + np.exp(-x))
+    exp_x = np.exp(x)
+    return exp_x / (exp_x + 1.0)
 
 def relu(x:float) -> float:
     return max(0, x)
 
 def tanh(x:float) -> float:
-    return math.tanh(x)
+    return np.tanh(x)
 
 def identity(x:float) -> float:
     return x
 
 def step_fn(x: float) -> float:
-    if x < 0:
-        return 0
-    elif x == 0:
-        return 0.5
-    else:
-        return 1
+    if x < 0: return 0
+    elif x == 0: return 0.5
+    else: return 1
+
+
+class ActivationFunctions(Enum):
+    RELU = "relu"
+    SIGMOID = "sigmoid"
+    TANH = "tanh"
+    IDENTITY = "identity"
+
+FUNCTION_MAP = {
+    ActivationFunctions.RELU: relu,
+    ActivationFunctions.SIGMOID: sigmoid,
+    ActivationFunctions.TANH: tanh,
+    ActivationFunctions.IDENTITY: identity
+}
 
 
 class UAF:
