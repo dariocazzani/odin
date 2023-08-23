@@ -1,8 +1,6 @@
-from typing import cast
 import numpy as np
 
 from inference_engines.spherical import SphericalEngine
-from inference_engines.spherical import Node
 from inference_engines.ops import sigmoid
 from inference_engines.ops import tanh
 from inference_engines.ops import relu
@@ -29,6 +27,7 @@ def test_behavior_1():
         biases=biases,
         output_node_ids={1},
         input_node_ids={0},
+        stateful=True,
         max_steps=6)
     output_nodes = graph.inference(verbose=True, input_values=input_values)
     energy = graph.energy
@@ -59,6 +58,7 @@ def test_behavior_2():
         biases=biases,
         output_node_ids={3},
         input_node_ids={0, 1, 2},
+        stateful=True,
         max_steps=6)
     output_nodes = graph.inference(verbose=True, input_values=input_values)
     assert abs(output_nodes.get(3, 0.0) - tanh(np.dot(weights_vector, inputs_vectors))) < TOL
@@ -92,6 +92,7 @@ def test_behavior_3():
         biases=biases,
         input_node_ids={0, 1, 2},
         output_node_ids={5},
+        stateful=True,
         max_steps=6
     )
     output_nodes = graph.inference(verbose=True, input_values=input_values)
@@ -132,7 +133,8 @@ def test_behavior_4():
         activations=activations,
         biases=biases,
         input_node_ids={0},
-        output_node_ids={3}        
+        output_node_ids={3},
+        stateful=True,
     )
     
     output_nodes = graph.inference(verbose=True, input_values=input_values)
@@ -170,6 +172,7 @@ def test_behavior_5():
         biases=biases,
         output_node_ids={1},
         input_node_ids={0},
+        stateful=True,
         max_steps=6   
     )
     output_nodes = graph.inference(verbose=True, input_values=input_values)
@@ -220,6 +223,7 @@ def test_behavior_6():
         biases=biases,
         output_node_ids={0, 1, 2},
         input_node_ids={0, 1, 2},
+        stateful=True,
         max_steps=1
     )
   
@@ -233,6 +237,7 @@ def test_behavior_6():
         biases=biases,
         output_node_ids={0, 1, 2},
         input_node_ids={0, 1, 2},
+        stateful=True,
         max_steps=6
     )
     graph.inference(verbose=True, input_values=input_values)
@@ -246,6 +251,7 @@ def test_behavior_6():
         biases=biases,
         output_node_ids={0, 1, 2},
         input_node_ids={0, 1, 2},
+        stateful=True,
         max_steps=NUM_STEPS
     )
     output_nodes = graph.inference(input_values=input_values)
