@@ -65,14 +65,12 @@ fi
 # Run tests
 echo "Running tests..."
 pytest tests/
-pytest_exit_status=$?
-
-if [ $pytest_exit_status -ne 0 ]; then
+if [ $? -ne 0 ]; then
     print_error "Tests failed. Initialization aborted."
-    exit $pytest_exit_status
+    exit 1
 fi
 
-print_success "Initialization complete. You can now run your Python scripts."
+# Additional info can be printed here later
+# ...
 
-# Explicitly return the exit status at the end of the script
-exit $pytest_exit_status
+print_success "Initialization complete. You can now run your Python scripts."
