@@ -1,6 +1,11 @@
 #!/bin/bash
 
-source ./scripts/common_functions.sh
+# Dynamically determine the script's directory
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Source the common functions
+source "$script_dir/common_functions.sh"
+
 display_fancy_header
 
 # Function to display the manual
