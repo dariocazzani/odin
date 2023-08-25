@@ -1,5 +1,5 @@
 import inspect
-from collections import deque
+from collections import deque, defaultdict
 from typing import Callable
 import random
 
@@ -123,6 +123,10 @@ class SphericalEngine:
         self._stateful = stateful
         self._max_steps = max_steps
         
+        # Variables used for compilations
+        self._queues_by_step = {}
+        self._next_nodes_by_step = {}
+        
         self._validate_inputs()
 
         self._nodes = {label: Node(label, activation=act) for label, act in activations.items()}
@@ -170,6 +174,14 @@ class SphericalEngine:
     @property
     def activations(self) -> dict:
         return self._activations
+
+    @property
+    def queues_by_step(self) -> dict:
+        return self._queues_by_step
+    
+    @property
+    def next_nodes_by_step(self) -> dict:
+        return self._next_nodes_by_step
     
     
     def _ensure_energy(self) -> None:
@@ -230,6 +242,24 @@ class SphericalEngine:
         self._active_nodes = deque()
 
 
+    def compile(self) -> tuple[dict, dict]:
+        self.inference(input_values={key: random.uniform(0, 1) for key in self._input_node_ids})
+        edges_by_step = self.queues_by_step
+        
+        grouped_by_end_node = {}
+        for step, edges in edges_by_step.items():
+            grouped = defaultdict(list)
+            for edge in edges:
+                grouped[edge.end_node.label].append(edge.start_node.label)
+            grouped_by_end_node[step] = dict(grouped)
+
+        nodes_by_step = {}
+        for step, nodes in self.next_nodes_by_step.items():
+            nodes_by_step[step] = [n.label for n in nodes]
+        
+        return grouped_by_end_node, nodes_by_step
+
+
     def inference(self, input_values:dict, verbose:bool=False) -> dict:
         input_values = {self._nodes[label]: value for label, value in input_values.items()}
         # Create source edges for each input node
@@ -244,10 +274,11 @@ class SphericalEngine:
         step = -1
         # Input edges don't count
         energy_used:int = 0 - len(source_edges)
-
+        
         while self._current_queue and step < self._max_steps:
             traversed_edges = set()  # Set to store traversed edges
             energy_used += len(self._current_queue)
+            self._queues_by_step[step] = self._current_queue.copy()
             while self._current_queue:
                 edge = self._current_queue.popleft()
                 input_value = edge.start_node.state * edge.weight
@@ -263,6 +294,7 @@ class SphericalEngine:
                         self._next_queue.append(out_edge)
                         traversed_edges.add(out_edge.id) # Mark the edge as traversed
 
+            self._next_nodes_by_step[step] = self._active_nodes.copy()
             # Apply activation to all active nodes
             while self._active_nodes:
                 node = self._active_nodes.popleft()
@@ -426,6 +458,15 @@ def main():
     print(graph._adjacency_dict)
     print("=============")
     print(graph.get_pull_adjacency_dict())
+    
+
+    
+    grouped_by_end_node, nodes_by_step = graph.compile()
+    
+    print(f"{grouped_by_end_node=}")
+    print(f"{nodes_by_step=}")
+    result = graph.inference(input_values={0: 1.3})
+    print(result)
     
     # output_nodes = result["output_nodes"]
     # energy = result["energy"]
