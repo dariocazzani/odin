@@ -26,8 +26,8 @@ cd odin
 Create a Python virtual environment using Python 3.10 or newer:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv .odin_venv
+source .odin_venv/bin/activate
 ```
 
 ### 3. Install Dependencies
