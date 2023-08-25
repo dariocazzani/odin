@@ -1,14 +1,10 @@
 #!/bin/bash
 
+source ./scripts/common_functions.sh
+display_fancy_header
+
 # Function to display the manual
 display_manual() {
-    echo " ██████╗ ██████╗ ██╗███╗   ██╗"
-    echo "██╔═══██╗██╔══██╗██║████╗  ██║"
-    echo "██║   ██║██║  ██║██║██╔██╗ ██║"
-    echo "██║   ██║██║  ██║██║██║╚██╗██║"
-    echo "╚██████╔╝██████╔╝██║██║ ╚████║"
-    echo " ╚═════╝ ╚═════╝ ╚═╝╚═╝  ╚═══╝"
-    echo ""
     echo "-------------------------------------------------------------"
     echo "Welcome to the Line Counter!"
     echo "-------------------------------------------------------------"

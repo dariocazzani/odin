@@ -5,13 +5,13 @@ import random
 
 import graphviz
 
-from .ops import sigmoid
-from .ops import tanh
-from .ops import relu
-from .ops import identity
+from inference_engines.ops import sigmoid
+from inference_engines.ops import tanh
+from inference_engines.ops import relu
+from inference_engines.ops import identity
 
 class Node:
-    def __init__(self, label, activation:Callable, state:float=0., bias:float=0):
+    def __init__(self, label:int, activation:Callable, state:float=0., bias:float=0):
         self._label = label
         self._state = state
         self._bias = bias
@@ -233,7 +233,7 @@ class SphericalEngine:
     def inference(self, input_values:dict, verbose:bool=False) -> dict:
         input_values = {self._nodes[label]: value for label, value in input_values.items()}
         # Create source edges for each input node
-        source_edges = [Edge(Node("Source", state=value, activation=lambda x: x), node, weight=1) for node, value in input_values.items()]
+        source_edges = [Edge(Node(-1, state=value, activation=lambda x: x), node, weight=1) for node, value in input_values.items()]
 
         # Enqueue the source edges
         self._current_queue.extend(source_edges)
@@ -414,12 +414,13 @@ def main():
         biases=biases,
         input_node_ids={0, 1},
         output_node_ids={7, 8},
+        stateful=True,
         max_steps=6)
     
-    print(f"Energy: {graph.energy}")
 
     result = graph.inference(input_values, verbose=False)
     graph.visualize()
+    print(f"Energy: {graph.energy}")
     
     
     print(graph._adjacency_dict)
