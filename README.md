@@ -40,7 +40,7 @@ pip install -r requirements.txt
 ### 4. Run Initialization Script
 ```bash
 chmod +x initialize.sh
-./initialize.sh
+source initialize.sh
 ```
 
 This will set up the `PYTHONPATH` and perform some initial checks.
