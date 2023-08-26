@@ -125,7 +125,6 @@ class SphericalEngine:
         
         # Variables used for compilations
         self._queues_by_step = {}
-        self._next_nodes_by_step = {}
         
         self._validate_inputs()
 
@@ -178,11 +177,7 @@ class SphericalEngine:
     @property
     def queues_by_step(self) -> dict:
         return self._queues_by_step
-    
-    @property
-    def next_nodes_by_step(self) -> dict:
-        return self._next_nodes_by_step
-    
+
     
     def _ensure_energy(self) -> None:
         """Ensure that the energy is set by running a dummy inference if necessary."""
@@ -242,22 +237,19 @@ class SphericalEngine:
         self._active_nodes = deque()
 
 
-    def compile(self) -> tuple[dict, dict]:
+    def compile(self) -> tuple[dict, int]:
         self.inference(input_values={key: random.uniform(0, 1) for key in self._input_node_ids})
         edges_by_step = self.queues_by_step
         
-        grouped_by_end_node = {}
+        # for each step we have the list of source nodes going to each end_node
+        grouped_by_end_node:dict[int, dict] = {}
         for step, edges in edges_by_step.items():
             grouped = defaultdict(list)
             for edge in edges:
                 grouped[edge.end_node.label].append(edge.start_node.label)
             grouped_by_end_node[step] = dict(grouped)
-
-        nodes_by_step = {}
-        for step, nodes in self.next_nodes_by_step.items():
-            nodes_by_step[step] = [n.label for n in nodes]
         
-        return grouped_by_end_node, nodes_by_step
+        return grouped_by_end_node, self.energy
 
 
     def inference(self, input_values:dict, verbose:bool=False) -> dict:
@@ -294,7 +286,6 @@ class SphericalEngine:
                         self._next_queue.append(out_edge)
                         traversed_edges.add(out_edge.id) # Mark the edge as traversed
 
-            self._next_nodes_by_step[step] = self._active_nodes.copy()
             # Apply activation to all active nodes
             while self._active_nodes:
                 node = self._active_nodes.popleft()
