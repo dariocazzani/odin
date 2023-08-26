@@ -2,10 +2,28 @@ import numpy as np
 from enum import Enum
 import numpy as np
 
+import torch
+import torch.nn.functional as F
+
 
 UAF_NUM_PARAMS = 5
 UAF_PARAMS = ['A', 'B', 'C', 'D', 'E']
 
+
+def sigmoid_torch(x):
+    return torch.sigmoid(x)
+
+def relu_torch(x):
+    return F.relu(x)
+
+def tanh_torch(x):
+    return torch.tanh(x)
+
+def identity_torch(x):
+    return x
+
+def step_fn_torch(x: torch.Tensor) -> torch.Tensor:
+    return (x > 0).float() + (x == 0).float() * 0.5
 
 # Define activations
 def sigmoid(x):
@@ -27,6 +45,13 @@ def step_fn(x: float) -> float:
     elif x == 0: return 0.5
     else: return 1
 
+activation_mapping = {
+    sigmoid: sigmoid_torch,
+    relu: relu_torch,
+    tanh: tanh_torch,
+    identity: identity_torch,
+    step_fn: step_fn_torch
+}
 
 class ActivationFunctions(Enum):
     RELU = "relu"
