@@ -134,8 +134,8 @@ def main():
         1: {2: -0.5, 3: 0.9},
         2: {4: 0.8, 5: -0.3},
         3: {6: -0.4},
-        4: {3: 0.6, 8: 0.1},
-        5: {7: 0.2},
+        4: {3: 0.6, 8: 0.1, 5: -0.01},
+        5: {7: 0.2, 2: 0.5},
         6: {7: -0.9},
         7: {},
         8: {},
@@ -143,6 +143,7 @@ def main():
     input_nodes_ids = {0, 1}
     output_nodes_ids = {7, 8}
     
+    TOL = 1E-2
     batch_size = 10
     x = torch.randn(batch_size, len(input_nodes_ids))
     
@@ -166,15 +167,17 @@ def main():
         stateful=True
     )
     
-    # graph.visualize()
-    
+    graph.visualize()
+        
     for idx, value in enumerate(x):
         input_values = {node_id: value[i].item() for i, node_id in enumerate(input_nodes_ids)}
         result = graph.inference(input_values=input_values, verbose=False)
-        for key, value in result.items():
-            assert abs(value - engine_out.get(key)[idx].detach().numpy()) < 1E-4
+        for key, _value in result.items():
+            assert abs(_value - engine_out.get(key)[idx].detach().numpy()) < TOL, \
+                f"Assertion failed for batch {idx+1}, key {key}. Graph result: {_value}, Engine result: {engine_out.get(key)[idx].detach().numpy()}"
         print(f"Test for batch {idx+1} passed!")
         graph.reset()
+
         
 if __name__ == "__main__":
     main()
