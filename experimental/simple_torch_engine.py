@@ -61,7 +61,7 @@ class DynamicSphericalTorch(nn.Module):
                 self._layers[layer_name] = layer
         
         # Initialize the state of each node of the network
-        # TODO: make it possible to load states
+        # TODO: <2023-08-26> make it possible to load states
         for node_id in adjacency_dict.keys():
             self._states[node_id] = torch.zeros(1,1)
                 
@@ -143,6 +143,7 @@ def main():
     input_nodes_ids = {0, 1}
     output_nodes_ids = {7, 8}
     
+    # TODO: <2023-08-26> set dtype to be the same across engines
     TOL = 1E-2
     batch_size = 10
     x = torch.randn(batch_size, len(input_nodes_ids))
