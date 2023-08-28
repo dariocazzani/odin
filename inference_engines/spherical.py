@@ -72,7 +72,7 @@ class Node:
         return self._outgoing_edges
 
     def __str__(self):
-        return f"Node(label={self._label}, state={self._state}, bias={self._bias})"
+        return f"Node(label={self._label}, state={self._state:.5f}, bias={self._bias:.5f})"
 
 
 class Edge:
@@ -292,9 +292,11 @@ class SphericalEngine:
                 node.compute_activation()
 
             self._current_queue, self._next_queue = self._next_queue, self._current_queue
-            step += 1
             if verbose:
-                print(f'Step {step}, current state: {[str(node) for node in self._nodes.values()]}')
+                print(f'======= Step {step} Spherical =======')
+                for node in self._nodes.values():
+                    print(node)
+            step += 1
 
         output_nodes = {nid: self._nodes[nid].state for nid in self._output_node_ids}
 
@@ -307,7 +309,7 @@ class SphericalEngine:
         
         return output_nodes
 
-
+    # TODO: <2023/08/26> add bias to the node info
     def visualize(self, node_names:dict={}) -> None:
         dot = graphviz.Digraph()
         
@@ -345,45 +347,6 @@ class SphericalEngine:
                 reversed_dict[target_node][source_node] = weight
 
         return reversed_dict
-
-    
-
-    # @staticmethod
-    # def genes_to_adjacency(genome, config):
-    #     adjacency_matrix = {}
-
-    #     # Gather expressed connections.
-    #     connections = [cg.key for cg in genome.connections.values()]# if cg.enabled]
-    #     all_nodes = set([k for k, _ in  genome.nodes.items()] + config.genome_config.input_keys)
-       
-    #     biases = {}
-    #     for node_idx, node in genome.nodes.items():
-    #         biases[node_idx] = node.bias
-        
-    #     for node in all_nodes:
-    #         edges = {}
-    #         for conn_key in connections:
-    #             inode, onode = conn_key
-    #             if node == inode:
-    #                 cg = genome.connections[conn_key]
-    #                 edges[onode] = cg.weight
-
-    #         if node in config.genome_config.input_keys:
-    #             activation_function = identity
-    #         else:
-    #             ng = genome.nodes[node]
-    #             activation_function = config.genome_config.activation_defs.get(ng.activation)
-    #         adjacency_matrix[node] = {
-    #             'activation': activation_function,
-    #             'edges': edges
-    #         }
-    #     return adjacency_matrix, config.genome_config.output_keys, biases
-
-    # @staticmethod
-    # def create(genome, config):
-    #     matrix, output_nodes, biases = Graph.genes_to_adjacency(genome, config)
-    #     return Graph(matrix, output_nodes, biases=biases)
-
 
 
 def main():
