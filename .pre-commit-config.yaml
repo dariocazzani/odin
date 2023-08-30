@@ -7,3 +7,10 @@ repos:
         language: system
         always_run: true
         pass_filenames: false
+
+      - id: mypy
+        name: mypy
+        entry: mypy tests/ inference_engines/ optimizers/ --check-untyped-defs --explicit-package-bases --warn-unreachable
+        language: system
+        always_run: true
+        pass_filenames: false
