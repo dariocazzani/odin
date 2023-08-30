@@ -70,7 +70,4 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Additional info can be printed here later
-# ...
-
 print_success "Initialization complete. You can now run your Python scripts."
