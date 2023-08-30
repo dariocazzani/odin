@@ -10,47 +10,49 @@ UAF_NUM_PARAMS = 5
 UAF_PARAMS = ['A', 'B', 'C', 'D', 'E']
 
 
-def sigmoid_torch(x):
-    return torch.sigmoid(x)
+# PyTorch functions
+def sigmoid_torch(x: torch.Tensor) -> torch.Tensor:
+    x = x.to(torch.float32)
+    return 1 / (1 + torch.exp(-x))
 
-def relu_torch(x):
+def relu_torch(x: torch.Tensor) -> torch.Tensor:
+    x = x.to(torch.float32)
     return F.relu(x)
 
-def tanh_torch(x):
+def tanh_torch(x: torch.Tensor) -> torch.Tensor:
+    x = x.to(torch.float32)
     return torch.tanh(x)
 
-def identity_torch(x):
+def identity_torch(x: torch.Tensor) -> torch.Tensor:
+    x = x.to(torch.float32)
     return x
 
-def step_fn_torch(x: torch.Tensor) -> torch.Tensor:
-    return (x > 0).float() + (x == 0).float() * 0.5
 
-# Define activations
-def sigmoid(x):
-    if x >= 0: return 1.0 / (1.0 + np.exp(-x))
-    exp_x = np.exp(x)
-    return exp_x / (exp_x + 1.0)
+# NumPy functions
+def sigmoid(x: np.float32) -> np.float32:
+    x = np.float32(x)
+    return np.float32(1.0) / (np.float32(1.0) + np.exp(-x))
 
-def relu(x:float) -> float:
-    return max(0, x)
 
-def tanh(x:float) -> float:
+def relu(x: np.float32) -> np.float32:
+    x = np.float32(x)
+    return np.maximum(np.float32(0.), x)
+
+def tanh(x: np.float32) -> np.float32:
+    x = np.float32(x)
     return np.tanh(x)
 
-def identity(x:float) -> float:
+def identity(x: np.float32) -> np.float32:
+    x = np.float32(x)
     return x
 
-def step_fn(x: float) -> float:
-    if x < 0: return 0
-    elif x == 0: return 0.5
-    else: return 1
+
 
 activation_mapping = {
     sigmoid: sigmoid_torch,
     relu: relu_torch,
     tanh: tanh_torch,
     identity: identity_torch,
-    step_fn: step_fn_torch
 }
 
 class ActivationFunctions(Enum):
