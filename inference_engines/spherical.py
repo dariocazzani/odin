@@ -3,22 +3,32 @@ from collections import deque, defaultdict
 from typing import Callable
 import random
 
-import graphviz
+import numpy as np
+import graphviz #type: ignore
 
 from inference_engines.ops import sigmoid
 from inference_engines.ops import tanh
 from inference_engines.ops import relu
 from inference_engines.ops import identity
 
+from interfaces.custom_types import AdjacencyDictType
+
 class Node:
-    def __init__(self, label:int, activation:Callable, state:float=0., bias:float=0):
-        self._label = label
-        self._state = state
-        self._bias = bias
-        self._pre_fire:float = 0
-        self._activation = activation
+    def __init__(
+            self,
+            label:int,
+            activation:Callable,
+            state=np.float32(0.),
+            bias=np.float32(0.)
+    ) -> None:
+                
+        self._label:int = label
+        self._state:np.float32 = state
+        self._bias:np.float32 = bias
+        self._pre_fire:np.float32 = np.float32(0.)
+        self._activation:Callable = activation
         self._validate_activation()
-        self._outgoing_edges = []
+        self._outgoing_edges:list[Edge] = []
 
     def _validate_activation(self):
         if not callable(self._activation):
@@ -28,9 +38,9 @@ class Node:
         if len(sig.parameters) != 1:
             raise ValueError("activation must be a unary function")
         try:
-            result = self._activation(1.0)
-            if not isinstance(result, float):
-                raise ValueError("activation must return a float")
+            result = self._activation(np.float32(1.0))
+            if not result.dtype.name == 'float32':
+                raise ValueError("activation must return a float32")
         except Exception as exc:
             raise ValueError(f'activation must be able to handle float inputs\n{exc}') from exc
 
@@ -42,22 +52,20 @@ class Node:
     def state(self):
         return self._state
     
+    def set_state(self, value):
+        self._state = value
+    
     @property
     def bias(self):
         return self._bias
 
-    @state.setter
-    def state(self, value):
-        self._state = value
-
-    @bias.setter
-    def bias(self, value):
+    def set_bias(self, value):
         self._bias = value
         
     def add_edge(self, edge):
         self._outgoing_edges.append(edge)
 
-    def add_input(self, value:float):
+    def add_input(self, value:np.float32):
         self._pre_fire += value
 
     # Fire!
@@ -65,7 +73,7 @@ class Node:
         self._state += self._pre_fire
         self._state += self.bias
         self._state = self._activation(self._state)
-        self._pre_fire = 0.
+        self._pre_fire = np.float32(0.)
 
     @property
     def outgoing_edges(self):
@@ -76,7 +84,7 @@ class Node:
 
 
 class Edge:
-    def __init__(self, start_node, end_node, weight):
+    def __init__(self, start_node:Node, end_node:Node, weight:np.float32):
         self._start_node = start_node
         self._end_node = end_node
         self._weight = weight
@@ -96,8 +104,8 @@ class Edge:
         return self._end_node
 
     @property
-    def weight(self):
-        return self._weight
+    def weight(self) -> np.float32:
+        return np.float32(self._weight)
 
     def __str__(self):
         return f"Edge(start={self._start_node.label}, end={self._end_node.label}, weight={self._weight})"
@@ -106,9 +114,9 @@ class Edge:
 class SphericalEngine:
     def __init__(
             self,
-            adjacency_dict:dict[int, dict[int, float]],
+            adjacency_dict:AdjacencyDictType,
             activations:dict[int, Callable],
-            biases:dict[int, float],
+            biases:dict[int, np.float32],
             output_node_ids:set[int],
             input_node_ids:set[int],
             stateful:bool,
@@ -116,7 +124,7 @@ class SphericalEngine:
         ) -> None:
 
         self._adjacency_dict = adjacency_dict
-        self._activations = activations
+        self._activations:dict[int, Callable] = activations
         self._biases = biases
         self._output_node_ids = output_node_ids
         self._input_node_ids = input_node_ids
@@ -124,26 +132,26 @@ class SphericalEngine:
         self._max_steps = max_steps
         
         # Variables used for compilations
-        self._queues_by_step = {}
+        self._queues_by_step:dict[int, deque] = {}
         
         self._validate_inputs()
 
         self._nodes = {label: Node(label, activation=act) for label, act in activations.items()}
         self._edges = []
-        self._current_queue = deque()
-        self._next_queue = deque()
-        self._active_nodes = deque()
+        self._current_queue:deque[Edge] = deque()
+        self._next_queue:deque[Edge] = deque()
+        self._active_nodes:deque[Node] = deque()
         self._energy:int | None = None
 
         # biases
         for node_id, value in biases.items():
             if node_id in self._nodes:
-                self._nodes[node_id].bias = value
+                self._nodes[node_id].set_bias(np.float32(value))  # Explicitly set as float32
     
         # Edges with weights
         for start_label, connections in adjacency_dict.items():
             for end_label, weight in connections.items():
-                self._edges.append(Edge(self._nodes[start_label], self._nodes[end_label], weight))
+                self._edges.append(Edge(self._nodes[start_label], self._nodes[end_label], np.float32(weight)))  # Explicitly set as float32
 
 
     def _validate_inputs(self) -> None:
@@ -231,10 +239,10 @@ class SphericalEngine:
 
     def reset(self):
         for node in self._nodes.values():
-            node.state = 0
-        self._current_queue = deque()
-        self._next_queue = deque()
-        self._active_nodes = deque()
+            node.set_state(np.float32(0))
+        self._current_queue.clear()
+        self._next_queue.clear()
+        self._active_nodes.clear()
 
 
     def compile(self) -> tuple[dict, int]:
@@ -253,9 +261,9 @@ class SphericalEngine:
 
 
     def inference(self, input_values:dict, verbose:bool=False) -> dict:
-        input_values = {self._nodes[label]: value for label, value in input_values.items()}
+        input_values = {self._nodes[label]: np.float32(value) for label, value in input_values.items()}  # Explicitly set as float32
         # Create source edges for each input node
-        source_edges = [Edge(Node(-1, state=value, activation=lambda x: x), node, weight=1) for node, value in input_values.items()]
+        source_edges = [Edge(Node(-1, state=value, activation=lambda x: x), node, weight=np.float32(1.0)) for node, value in input_values.items()]
 
         # Enqueue the source edges
         self._current_queue.extend(source_edges)
@@ -337,8 +345,8 @@ class SphericalEngine:
         dot.render(file_path_without_extension, view=True)
 
 
-    def get_pull_adjacency_dict(self) -> dict[int, dict[int, float]]:
-        reversed_dict = {node: {} for node in self._adjacency_dict.keys()}
+    def get_pull_adjacency_dict(self) -> AdjacencyDictType:
+        reversed_dict:AdjacencyDictType = {node: {} for node in self._adjacency_dict.keys()}
         
         for source_node, connections in self._adjacency_dict.items():
             for target_node, weight in connections.items():
@@ -389,59 +397,6 @@ def main():
         7: {},
         8: {},
     }
-    
-
-    # list of tuples mapping node labels to input values
-    input_values = {0: 1, 1: 0.5}
-
-    graph = SphericalEngine(
-        adjacency_dict=adjacency_dict,
-        activations=activations,
-        biases=biases,
-        input_node_ids={0, 1},
-        output_node_ids={7, 8},
-        stateful=True,
-        max_steps=6)
-    
-
-    result = graph.inference(input_values, verbose=False)
-    graph.visualize()
-    print(f"Energy: {graph.energy}")
-    
-    
-    print(graph._adjacency_dict)
-    print("=============")
-    print(graph.get_pull_adjacency_dict())
-    
-
-    
-    grouped_by_end_node, nodes_by_step = graph.compile()
-    
-    print(f"{grouped_by_end_node=}")
-    print(f"{nodes_by_step=}")
-    result = graph.inference(input_values={0: 1.3})
-    print(result)
-    
-    # output_nodes = result["output_nodes"]
-    # energy = result["energy"]
-    # print(f"Energy used: {energy:.2f}")
-    # for node in output_nodes:
-    #     print(f'Output Node {node.label} final state: {node.state:.4f}')
-    
-    # result = graph.inference(input_values)
-    # output_nodes = result["output_nodes"]
-    # energy = result["energy"]
-    # print(f"Energy used: {energy:.2f}")
-    # for node in output_nodes:
-    #     print(f'Output Node {node.label} final state: {node.state:.4f}')
-    # graph.reset()
-
-    # result = graph.inference(input_values)
-    # output_nodes = result["output_nodes"]
-    # energy = result["energy"]
-    # print(f"Energy used: {energy:.2f}")
-    # for node in output_nodes:
-    #     print(f'Output Node {node.label} final state: {node.state:.4f}')
     
 
 if __name__ == "__main__":
