@@ -3,6 +3,7 @@ coloredlogs==15.0.1
 graphviz==0.20.1
 gymnasium==0.29.0
 ipython==8.14.0
+mypy==1.5.1
 pip-chill==1.0.3
 pre-commit==3.3.3
 pretty-errors==1.2.25
