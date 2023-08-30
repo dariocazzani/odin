@@ -1,5 +1,5 @@
 import logging
-import coloredlogs
+import coloredlogs #type: ignore
 
 class ColoredLogger:
     def __init__(self, logger_name: str, level: str = 'INFO'):
@@ -17,7 +17,7 @@ class ColoredLogger:
         log_format = '%(asctime)s %(name)s %(levelname)s %(message)s'
         coloredlogs.install(level=level, logger=self.logger, fmt=log_format)
 
-    def get_logger(self):
+    def get_logger(self) -> logging.Logger:
         """
         Returns the initialized logger.
         """
