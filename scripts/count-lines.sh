@@ -3,6 +3,9 @@
 # Dynamically determine the script's directory
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# Assume root directory is one level below the script directory
+root_dir="$(dirname "$script_dir")"
+
 # Source the common functions
 source "$script_dir/common_functions.sh"
 
@@ -67,9 +70,9 @@ done
 
 # Construct the find command
 if [ ${#file_types[@]} -eq 0 ]; then
-    find_cmd="find . -type f"
+    find_cmd="find $root_dir -type f"
 else
-    find_cmd="find . -type f \( -false"
+    find_cmd="find $root_dir . -type f \( -false"
     for ext in "${file_types[@]}"; do
         find_cmd="$find_cmd -o -name '*$ext'"
     done
