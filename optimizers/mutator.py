@@ -45,7 +45,7 @@ class Mutator:
     
         
     @staticmethod
-    def modify_weights(adjacency_dict: AdjacencyDictType) -> dict[int, dict[int, np.float32]]:
+    def modify_weights(adjacency_dict: AdjacencyDictType) -> AdjacencyDictType:
         modified_dict = {key: value.copy() for key, value in adjacency_dict.items()}
         for node_id, connections in modified_dict.items():
             for target_node, _ in connections.items():
