@@ -27,6 +27,10 @@ def identity_torch(x: torch.Tensor) -> torch.Tensor:
     x = x.to(torch.float32)
     return x
 
+def elu_torch(x: torch.Tensor) -> torch.Tensor:
+    x = x.to(torch.float32)
+    return F.elu(x)
+
 
 # NumPy functions
 def sigmoid(x: np.float32) -> np.float32:
@@ -46,6 +50,10 @@ def identity(x: np.float32) -> np.float32:
     x = np.float32(x)
     return x
 
+def elu(x: np.float32) -> np.float32:
+    x = np.float32(x)
+    return np.float32(np.where(x > 0, x, np.exp(x) - 1))
+
 
 
 activation_mapping = {
@@ -53,6 +61,7 @@ activation_mapping = {
     relu: relu_torch,
     tanh: tanh_torch,
     identity: identity_torch,
+    elu: elu_torch,
 }
 
 class ActivationFunctions(Enum):
@@ -60,12 +69,14 @@ class ActivationFunctions(Enum):
     SIGMOID = "sigmoid"
     TANH = "tanh"
     IDENTITY = "identity"
+    ELU = "elu"
 
 FUNCTION_MAP = {
     ActivationFunctions.RELU: relu,
     ActivationFunctions.SIGMOID: sigmoid,
     ActivationFunctions.TANH: tanh,
-    ActivationFunctions.IDENTITY: identity
+    ActivationFunctions.IDENTITY: identity,
+    ActivationFunctions.ELU: elu,
 }
 
 
