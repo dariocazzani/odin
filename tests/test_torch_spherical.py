@@ -23,7 +23,7 @@ def generate_parameters() -> tuple:
     output_nodes_ids = set(range(num_inputs, num_inputs+num_outputs))
     hidden_node_ids = set(range(num_inputs + num_outputs, num_outputs + num_inputs + num_hiddens))    
     
-    #TODO: <2023-08-28> Create interface for adjacency_dict
+    # TODO: <2023-08-28> Create interface for adjacency_dict
     adjacency_dict:AdjacencyDictType = {}
     all_nodes = input_nodes_ids.union(hidden_node_ids).union(output_nodes_ids)
     

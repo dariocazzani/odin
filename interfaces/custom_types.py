@@ -1,4 +1,4 @@
 import numpy as np
 
 AdjacencyDictType = dict[int, dict[int, np.float32]]
-#TODO: add biases and activations type
+#TODO: <2023-08-31> add biases and activations type
