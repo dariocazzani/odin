@@ -17,7 +17,7 @@ ODIN is ...
 First, clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/dariocazzani/odin.git
+git clone git@github.com:AlarioAI/odin.git
 cd odin
 ```
 
