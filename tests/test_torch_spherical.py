@@ -8,6 +8,7 @@ from inference_engines.torch_spherical import DynamicSphericalTorch, SphericalEn
 from inference_engines.ops import FUNCTION_MAP
 from logger import ColoredLogger
 from interfaces.custom_types import AdjacencyDictType
+from interfaces.custom_types import float32
 
 log = ColoredLogger(os.path.basename(__file__)).get_logger()
 torch.random.manual_seed(53)
@@ -33,7 +34,7 @@ def generate_parameters() -> tuple:
             continue
         target_nodes = all_nodes - input_nodes_ids
         target_nodes_subset = random.sample(list(target_nodes), k=random.randint(0, len(target_nodes)))
-        adjacency_dict[node] = {target: np.float32(np.random.randn() * 0.1) for target in target_nodes_subset}
+        adjacency_dict[node] = {target: float32(np.random.randn() * 0.1) for target in target_nodes_subset}
 
     biases = {node: np.random.randn() for node in all_nodes}
     

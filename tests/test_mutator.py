@@ -5,11 +5,12 @@ import numpy as np
 from optimizers.mutator import Mutator
 from inference_engines.ops import identity
 from interfaces.custom_types import AdjacencyDictType
+from interfaces.custom_types import float32
 
 TOL = 1e-5  
 
 def create_sample_data() -> tuple:
-    adj_dict:AdjacencyDictType = {0: {1: np.float32(0.5)}, 1: {2: np.float32(0.3)}, 2: {}}
+    adj_dict:AdjacencyDictType = {0: {1: float32(0.5)}, 1: {2: float32(0.3)}, 2: {}}
     biases = {0: 0.2, 1: 0.3, 2: 0.4}
     activations:dict[int, Callable] = {0: identity, 1: identity, 2: identity}
     input_nodes = {0}

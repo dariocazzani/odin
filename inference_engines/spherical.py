@@ -3,7 +3,6 @@ from collections import deque, defaultdict
 from typing import Callable
 import random
 
-import numpy as np
 import graphviz #type: ignore
 
 from inference_engines.ops import sigmoid
@@ -12,20 +11,23 @@ from inference_engines.ops import relu
 from inference_engines.ops import identity
 
 from interfaces.custom_types import AdjacencyDictType
+from interfaces.custom_types import BiasesType
+from interfaces.custom_types import ActivationsType
+from interfaces.custom_types import Float32, float32
 
 class Node:
     def __init__(
             self,
             label:int,
             activation:Callable,
-            state=np.float32(0.),
-            bias=np.float32(0.)
+            state=float32(0.),
+            bias=float32(0.)
     ) -> None:
                 
         self._label:int = label
-        self._state:np.float32 = state
-        self._bias:np.float32 = bias
-        self._pre_fire:np.float32 = np.float32(0.)
+        self._state:Float32 = state
+        self._bias:Float32 = bias
+        self._pre_fire:Float32 = float32(0.)
         self._activation:Callable = activation
         self._validate_activation()
         self._outgoing_edges:list[Edge] = []
@@ -38,7 +40,7 @@ class Node:
         if len(sig.parameters) != 1:
             raise ValueError("activation must be a unary function")
         try:
-            result = self._activation(np.float32(1.0))
+            result = self._activation(float32(1.0))
             if not result.dtype.name == 'float32':
                 raise ValueError("activation must return a float32")
         except Exception as exc:
@@ -65,7 +67,7 @@ class Node:
     def add_edge(self, edge):
         self._outgoing_edges.append(edge)
 
-    def add_input(self, value:np.float32):
+    def add_input(self, value:Float32):
         self._pre_fire += value
 
     # Fire!
@@ -73,7 +75,7 @@ class Node:
         self._state += self._pre_fire
         self._state += self.bias
         self._state = self._activation(self._state)
-        self._pre_fire = np.float32(0.)
+        self._pre_fire = float32(0.)
 
     @property
     def outgoing_edges(self):
@@ -84,7 +86,7 @@ class Node:
 
 
 class Edge:
-    def __init__(self, start_node:Node, end_node:Node, weight:np.float32):
+    def __init__(self, start_node:Node, end_node:Node, weight:Float32):
         self._start_node = start_node
         self._end_node = end_node
         self._weight = weight
@@ -104,8 +106,8 @@ class Edge:
         return self._end_node
 
     @property
-    def weight(self) -> np.float32:
-        return np.float32(self._weight)
+    def weight(self) -> Float32:
+        return self._weight
 
     def __str__(self):
         return f"Edge(start={self._start_node.label}, end={self._end_node.label}, weight={self._weight})"
@@ -115,8 +117,8 @@ class SphericalEngine:
     def __init__(
             self,
             adjacency_dict:AdjacencyDictType,
-            activations:dict[int, Callable],
-            biases:dict[int, np.float32],
+            activations:ActivationsType,
+            biases:BiasesType,
             output_node_ids:set[int],
             input_node_ids:set[int],
             stateful:bool,
@@ -124,7 +126,7 @@ class SphericalEngine:
         ) -> None:
 
         self._adjacency_dict = adjacency_dict
-        self._activations:dict[int, Callable] = activations
+        self._activations:ActivationsType = activations
         self._biases = biases
         self._output_node_ids = output_node_ids
         self._input_node_ids = input_node_ids
@@ -146,12 +148,12 @@ class SphericalEngine:
         # biases
         for node_id, value in biases.items():
             if node_id in self._nodes:
-                self._nodes[node_id].set_bias(np.float32(value))  # Explicitly set as float32
+                self._nodes[node_id].set_bias(float32(value))  # Explicitly set as float32
     
         # Edges with weights
         for start_label, connections in adjacency_dict.items():
             for end_label, weight in connections.items():
-                self._edges.append(Edge(self._nodes[start_label], self._nodes[end_label], np.float32(weight)))  # Explicitly set as float32
+                self._edges.append(Edge(self._nodes[start_label], self._nodes[end_label], float32(weight)))  # Explicitly set as float32
 
 
     def _validate_inputs(self) -> None:
@@ -239,7 +241,7 @@ class SphericalEngine:
 
     def reset(self):
         for node in self._nodes.values():
-            node.set_state(np.float32(0))
+            node.set_state(float32(0))
         self._current_queue.clear()
         self._next_queue.clear()
         self._active_nodes.clear()
@@ -261,9 +263,9 @@ class SphericalEngine:
 
 
     def inference(self, input_values:dict, verbose:bool=False) -> dict:
-        input_values = {self._nodes[label]: np.float32(value) for label, value in input_values.items()}  # Explicitly set as float32
+        input_values = {self._nodes[label]: float32(value) for label, value in input_values.items()}  # Explicitly set as float32
         # Create source edges for each input node
-        source_edges = [Edge(Node(-1, state=value, activation=lambda x: x), node, weight=np.float32(1.0)) for node, value in input_values.items()]
+        source_edges = [Edge(Node(-1, state=value, activation=lambda x: x), node, weight=float32(1.0)) for node, value in input_values.items()]
 
         # Enqueue the source edges
         self._current_queue.extend(source_edges)
@@ -317,13 +319,13 @@ class SphericalEngine:
         
         return output_nodes
 
-    # TODO: <2023/08/26> add bias to the node info
     def visualize(self, node_names:dict={}) -> None:
         dot = graphviz.Digraph()
         
         for node, attr in self.activations.items():
             node_name = node_names.get(node, "")
             activation_function = attr.__name__
+            bias = self._biases[node]
 
             node_color:str = 'lightblue'
             if node in self.output_node_ids:
@@ -331,7 +333,14 @@ class SphericalEngine:
             if node in self.input_node_ids:
                 node_color = 'orange'
 
-            dot.node(f"{node}", label=f"{node}\nActivation: {activation_function}\n{node_name}", style='filled', fillcolor=node_color)
+            if node_name != "":
+                node_name = f"Name: {node_name}"
+            dot.node(
+                f"{node}",
+                label = f"ID = {node}\nActivation: {activation_function}\nbias: {bias}\n{node_name}",
+                style='filled',
+                fillcolor=node_color
+            )
 
         for node, connections in self._adjacency_dict.items():
             for neighbor, weight in connections.items():
@@ -372,7 +381,6 @@ def main():
     8  0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0 
     """
     
-    biases = {0: 0.0, 1: 0.0, 2: 0.0, 3:0.0, 4:0.0, 5:0.0, 6:0.0, 7:0.0, 8:0.0}
     activations = {
         0: sigmoid,
         1: relu,
@@ -385,19 +393,30 @@ def main():
         8: identity
     }
     
-    
-    adjacency_dict = {
-        0: {2: 0.7},
-        1: {2: -0.5, 3: 0.9},
-        2: {4: 0.8, 5: -0.3},
-        3: {6: -0.4},
-        4: {3: 0.6, 8: 0.1},
-        5: {7: 0.2},
-        6: {7: -0.9},
+
+    adjacency_dict: AdjacencyDictType = {
+        0: {2: float32(0.7)},
+        1: {2: float32(-0.5), 3: float32(0.9)},
+        2: {4: float32(0.8), 5: float32(-0.3)},
+        3: {6: float32(-0.4)},
+        4: {3: float32(0.6), 8: float32(0.1)},
+        5: {7: float32(0.2)},
+        6: {7: float32(-0.9)},
         7: {},
         8: {},
     }
+    biases = {node: float32(0.) for node in adjacency_dict.keys()}
     
+    graph = SphericalEngine(
+        adjacency_dict,
+        activations,
+        biases = biases,
+        input_node_ids={0, 1},
+        output_node_ids={7,8},
+        stateful=True,
+    )
+    
+    graph.visualize(node_names={0: "X", 1: "Y"})
 
 if __name__ == "__main__":
     main()

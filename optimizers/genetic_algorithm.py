@@ -6,6 +6,8 @@ from inference_engines.spherical import SphericalEngine
 from logger import ColoredLogger
 from optimizers.mutator import Mutator
 from interfaces.custom_types import AdjacencyDictType
+from interfaces.custom_types import BiasesType
+from interfaces.custom_types import float32
 
 log = ColoredLogger("GeneticOptimizer").get_logger()
 
@@ -42,11 +44,11 @@ class GeneticOptimizer:
             potential_output_nodes = range(self._input_size, self._input_size + self._output_size)
             num_connections = random.randint(1, self._output_size)
             selected_output_nodes = random.sample(potential_output_nodes, num_connections)
-            adjacency_dict[i] = {output: np.float32(random.uniform(-1, 1)) for output in selected_output_nodes}
+            adjacency_dict[i] = {output: float32(random.uniform(-1, 1)) for output in selected_output_nodes}
         for i in range(self._input_size, self._input_size + self._output_size):
             adjacency_dict[i] = {}            
         
-        biases:dict[int, np.float32] = {node: np.float32(0.0) for node in adjacency_dict.keys()}
+        biases:BiasesType = {node: float32(0.0) for node in adjacency_dict.keys()}
         available_activations = list(FUNCTION_MAP.values())
         activations = {node: random.choice(available_activations) for node in adjacency_dict.keys()}
         individual:SphericalEngine = SphericalEngine(
@@ -183,7 +185,7 @@ class GeneticOptimizer:
 
         for _ in range(self._population_size):
             pick = random.uniform(0, 1)
-            current = np.float32(0.)
+            current = float32(0.)
             for i, individual in enumerate(self._population):
                 current += normalized_fitnesses[i]
                 if current > pick:

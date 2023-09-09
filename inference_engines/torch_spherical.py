@@ -1,17 +1,18 @@
 from typing import Callable
 import torch
 import torch.nn as nn
-import numpy as np
 from inference_engines.ops import activation_mapping
 from inference_engines.spherical import SphericalEngine
 from interfaces.custom_types import AdjacencyDictType
+from interfaces.custom_types import BiasesType
+from interfaces.custom_types import ActivationsType
 
 class DynamicSphericalTorch(nn.Module):
     def __init__(
         self,
         adjacency_dict:AdjacencyDictType,
-        activations:dict[int, Callable],
-        biases:dict[int, np.float32],
+        activations:ActivationsType,
+        biases:BiasesType,
         output_node_ids:set[int],
         input_node_ids:set[int],
         stateful:bool,
@@ -74,7 +75,7 @@ class DynamicSphericalTorch(nn.Module):
             max_steps=self._max_steps
         )
         
-    def _initialize_activations_torch(self, activations: dict[int, Callable], activation_mapping: dict[Callable, Callable]):
+    def _initialize_activations_torch(self, activations: ActivationsType, activation_mapping: dict[Callable, Callable]):
         self._activations_torch = {}
         for key, func in activations.items():
             if func in activation_mapping:

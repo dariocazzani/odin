@@ -5,6 +5,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from interfaces.custom_types import float32, Float32
+
 
 UAF_NUM_PARAMS = 5
 UAF_PARAMS = ['A', 'B', 'C', 'D', 'E']
@@ -33,26 +35,30 @@ def elu_torch(x: torch.Tensor) -> torch.Tensor:
 
 
 # NumPy functions
-def sigmoid(x: np.float32) -> np.float32:
-    x = np.float32(x)
-    return np.float32(1.0) / (np.float32(1.0) + np.exp(-x))
+def sigmoid(x:Float32) -> Float32:
+    x = float32(x)
+    return float32(1.0) / (float32(1.0) + np.exp(-x))
 
 
-def relu(x: np.float32) -> np.float32:
-    x = np.float32(x)
-    return np.maximum(np.float32(0.), x)
+def relu(x:Float32) -> Float32:
+    x = float32(x)
+    return np.maximum(float32(0.), x)
 
-def tanh(x: np.float32) -> np.float32:
-    x = np.float32(x)
+def tanh(x:Float32) -> Float32:
+    x = float32(x)
     return np.tanh(x)
 
-def identity(x: np.float32) -> np.float32:
-    x = np.float32(x)
+def identity(x:Float32) -> Float32:
+    x = float32(x)
     return x
 
-def elu(x: np.float32) -> np.float32:
-    x = np.float32(x)
-    return np.float32(np.where(x > 0, x, np.exp(x) - 1))
+def elu(x: Float32) -> Float32:
+    x = float32(x)
+    result = np.where(x > 0, x, np.exp(x) - 1)
+    if isinstance(result, np.ndarray) and result.size == 1:
+        return Float32(result.item())
+    else:
+        return Float32(result)
 
 
 

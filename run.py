@@ -59,7 +59,7 @@ def main():
         max_steps=6,
         envs=envs,
     )
-    log.info("Starting optimization...")
+    log.info(f"Starting optimization for experiment {experiment_name}...")
     best_individual = genalg.optimize(10)
     best_individual.visualize()
     env = gym.make(experiment_name, render_mode="human")

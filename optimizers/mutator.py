@@ -1,11 +1,13 @@
 
 import random
-from typing import Callable
 
 import numpy as np
 
 from inference_engines.ops import FUNCTION_MAP
 from interfaces.custom_types import AdjacencyDictType
+from interfaces.custom_types import BiasesType
+from interfaces.custom_types import ActivationsType
+from interfaces.custom_types import float32
 from logger import ColoredLogger
 
 log = ColoredLogger("Mutator").get_logger()
@@ -56,7 +58,7 @@ class Mutator:
 
 
     @staticmethod
-    def modify_biases(biases: dict[int, np.float32]) -> dict[int, np.float32]:
+    def modify_biases(biases: BiasesType) -> BiasesType:
         modified_biases = biases.copy()
         for node_id in modified_biases:
             if random.random() < Mutator.mutation_prob:
@@ -65,7 +67,7 @@ class Mutator:
 
 
     @staticmethod
-    def modify_activations(activations: dict[int, Callable]) -> dict[int, Callable]:
+    def modify_activations(activations: ActivationsType) -> ActivationsType:
         new_activations = {}
         for node_id, func in activations.items():
             if random.random() < Mutator.mutation_prob:
@@ -75,7 +77,7 @@ class Mutator:
         return new_activations
     
     @staticmethod
-    def add_node(adjacency_dict: AdjacencyDictType, biases: dict[int, np.float32], activations: dict[int, Callable]) -> tuple:
+    def add_node(adjacency_dict: AdjacencyDictType, biases: BiasesType, activations: ActivationsType) -> tuple:
         modified_adjacency_dict = {k: v.copy() for k, v in adjacency_dict.items()}
         modified_biases = biases.copy()
         modified_activations = activations.copy()
@@ -92,13 +94,13 @@ class Mutator:
 
         if input_node not in modified_adjacency_dict:
             modified_adjacency_dict[input_node] = {}
-        modified_adjacency_dict[input_node][new_node_id] = np.float32(np.random.randn())
+        modified_adjacency_dict[input_node][new_node_id] = float32(np.random.randn())
 
         if new_node_id not in modified_adjacency_dict:
             modified_adjacency_dict[new_node_id] = {}
-        modified_adjacency_dict[new_node_id][output_node] = np.float32(np.random.randn())
+        modified_adjacency_dict[new_node_id][output_node] = float32(np.random.randn())
 
-        modified_biases[new_node_id] = np.float32(0.0)
+        modified_biases[new_node_id] = float32(0.0)
         modified_activations[new_node_id] = random.choice(Mutator.available_activations)
 
         return modified_adjacency_dict, modified_biases, modified_activations
@@ -115,7 +117,7 @@ class Mutator:
             potential_targets = [n for n in all_nodes if n not in modified_adjacency_dict[node_id]]
             if potential_targets:
                 target_node = np.random.choice(potential_targets)
-                modified_adjacency_dict[node_id][target_node] = np.float32(np.random.randn())
+                modified_adjacency_dict[node_id][target_node] = float32(np.random.randn())
                 break
         return modified_adjacency_dict
 
@@ -136,7 +138,7 @@ class Mutator:
 
 
     @staticmethod
-    def remove_node(adjacency_dict: AdjacencyDictType, biases: dict[int, np.float32], activations: dict[int, Callable], input_node_ids: set[int], output_node_ids: set[int]) -> tuple:
+    def remove_node(adjacency_dict: AdjacencyDictType, biases: BiasesType, activations: ActivationsType, input_node_ids: set[int], output_node_ids: set[int]) -> tuple:
         modified_adjacency_dict = {k: v.copy() for k, v in adjacency_dict.items()}
         modified_biases = biases.copy()
         modified_activations = activations.copy()
