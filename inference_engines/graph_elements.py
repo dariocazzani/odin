@@ -19,6 +19,7 @@ class Node:
         self._validate_activation()
         self._outgoing_edges:list[Edge] = []
 
+
     def _validate_activation(self):
         if not callable(self._activation):
             raise ValueError("activation must be a callable function")
@@ -34,29 +35,26 @@ class Node:
             raise ValueError(f'activation must be able to handle float inputs\n{exc}') from exc
 
     @property
-    def label(self):
-        return self._label
+    def label(self): return self._label
 
     @property
-    def state(self):
-        return self._state
+    def state(self): return self._state
     
-    def set_state(self, value):
-        self._state = value
+    def set_state(self, value): self._state = value
     
     @property
-    def bias(self):
-        return self._bias
+    def bias(self): return self._bias
 
-    def set_bias(self, value):
-        self._bias = value
+    def set_bias(self, value): self._bias = value
         
-    def add_edge(self, edge):
-        self._outgoing_edges.append(edge)
+    def add_edge(self, edge): self._outgoing_edges.append(edge)
 
-    def add_input(self, value:Float32):
-        self._pre_fire += value
+    def add_input(self, value:Float32): self._pre_fire += value
 
+    @property
+    def outgoing_edges(self):
+        return self._outgoing_edges
+    
     # Fire!
     def compute_activation(self):
         self._state += self._pre_fire
@@ -64,9 +62,6 @@ class Node:
         self._state = self._activation(self._state)
         self._pre_fire = float32(0.)
 
-    @property
-    def outgoing_edges(self):
-        return self._outgoing_edges
 
     def __str__(self):
         return f"Node(label={self._label}, state={self._state:.5f}, bias={self._bias:.5f})"
@@ -81,20 +76,16 @@ class Edge:
         self._id = f"{start_node.label}_{end_node.label}"  # Unique label for each edge
         
     @property
-    def id(self):
-        return self._id
+    def id(self): return self._id
     
     @property
-    def start_node(self):
-        return self._start_node
+    def start_node(self): return self._start_node
 
     @property
-    def end_node(self):
-        return self._end_node
+    def end_node(self): return self._end_node
 
     @property
-    def weight(self) -> Float32:
-        return self._weight
+    def weight(self) -> Float32: return self._weight
 
     def __str__(self):
         return f"Edge(start={self._start_node.label}, end={self._end_node.label}, weight={self._weight})"

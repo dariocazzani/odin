@@ -1,12 +1,9 @@
 import random
 import numpy as np
 
-from inference_engines.ops import FUNCTION_MAP
 from inference_engines.spherical import SphericalEngine
 from logger import ColoredLogger
 from optimizers.mutator import Mutator
-from interfaces.custom_types import AdjacencyDictType
-from interfaces.custom_types import BiasesType
 from interfaces.custom_types import float32
 
 log = ColoredLogger("GeneticOptimizer").get_logger()

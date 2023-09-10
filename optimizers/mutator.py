@@ -1,8 +1,6 @@
 
 import random
-
 import numpy as np
-
 from inference_engines.ops import FUNCTION_MAP
 from interfaces.custom_types import AdjacencyDictType
 from interfaces.custom_types import BiasesType
@@ -166,4 +164,3 @@ class Mutator:
             del modified_activations[node_to_remove]
 
         return modified_adjacency_dict, modified_biases, modified_activations
-

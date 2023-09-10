@@ -11,6 +11,7 @@ from inference_engines.ops import sigmoid
 from inference_engines.ops import tanh
 from inference_engines.ops import relu
 from inference_engines.ops import identity
+from inference_engines.ops import elu
 
 from interfaces.custom_types import AdjacencyDictType
 from interfaces.custom_types import BiasesType
@@ -92,7 +93,6 @@ class SphericalEngine:
     def _validate_inputs(self) -> None:
         """Validates input data for the Graph class."""
         adjacency_keys = set(self._adjacency_dict.keys())
-
         if not set(self._activations.keys()) == adjacency_keys:
             raise ValueError("Mismatch between activations and adjacency_dict keys.")
         if not set(self._biases.keys()) == adjacency_keys:
@@ -296,11 +296,11 @@ def main():
         1: relu,
         2: tanh,
         3: sigmoid,
-        4: tanh,
+        4: elu,
         5: identity,
         6: sigmoid,
         7: tanh,
-        8: identity
+        8: elu,
     }
     
 
