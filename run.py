@@ -1,7 +1,6 @@
 import os
 import gymnasium as gym
 import numpy as np
-
 from optimizers.genetic_algorithm import GeneticOptimizer
 from logger import ColoredLogger
 

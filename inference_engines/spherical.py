@@ -1,18 +1,14 @@
 from collections import deque, defaultdict
 import random
-
 import graphviz #type: ignore
-
 from inference_engines.graph_elements import Node
 from inference_engines.graph_elements import Edge
 from inference_engines.ops import FUNCTION_MAP
-
 from inference_engines.ops import sigmoid
 from inference_engines.ops import tanh
 from inference_engines.ops import relu
 from inference_engines.ops import identity
 from inference_engines.ops import elu
-
 from interfaces.custom_types import AdjacencyDictType
 from interfaces.custom_types import BiasesType
 from interfaces.custom_types import ActivationsType

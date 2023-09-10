@@ -5,9 +5,9 @@ from inference_engines.ops import sigmoid
 from inference_engines.ops import tanh
 from inference_engines.ops import relu
 from inference_engines.ops import identity
-
 from interfaces.custom_types import AdjacencyDictType
 from interfaces.custom_types import float32, Float32
+np.random.seed(53)
 
 TOL = 1E-6
 

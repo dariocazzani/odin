@@ -1,6 +1,5 @@
 import random
 import numpy as np
-
 from inference_engines.spherical import SphericalEngine
 from logger import ColoredLogger
 from optimizers.mutator import Mutator

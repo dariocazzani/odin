@@ -1,7 +1,4 @@
 from typing import Callable
-
-import numpy as np
-
 from optimizers.mutator import Mutator
 from inference_engines.ops import identity
 from interfaces.custom_types import AdjacencyDictType

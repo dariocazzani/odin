@@ -1,9 +1,7 @@
 import os
 import random
-
 import torch
 import numpy as np
-
 from inference_engines.torch_spherical import DynamicSphericalTorch, SphericalEngine
 from inference_engines.ops import FUNCTION_MAP
 from logger import ColoredLogger
