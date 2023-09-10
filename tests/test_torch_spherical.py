@@ -24,7 +24,6 @@ def generate_parameters() -> tuple:
     output_nodes_ids = set(range(num_inputs, num_inputs+num_outputs))
     hidden_node_ids = set(range(num_inputs + num_outputs, num_outputs + num_inputs + num_hiddens))    
     
-    # TODO: <2023-08-28> Create interface for adjacency_dict
     adjacency_dict:AdjacencyDictType = {}
     all_nodes = input_nodes_ids.union(hidden_node_ids).union(output_nodes_ids)
     
@@ -36,7 +35,7 @@ def generate_parameters() -> tuple:
         target_nodes_subset = random.sample(list(target_nodes), k=random.randint(0, len(target_nodes)))
         adjacency_dict[node] = {target: float32(np.random.randn() * 0.1) for target in target_nodes_subset}
 
-    biases = {node: np.random.randn() for node in all_nodes}
+    biases = {node: float32(np.random.randn()) for node in all_nodes}
     
     available_activations = list(FUNCTION_MAP.values())
     activations = {node: random.choice(available_activations) for node in all_nodes}
@@ -81,5 +80,5 @@ def test_dynamic_spherical_torch():
         for key, _value in result.items():
             assert abs(_value - engine_out.get(key)[idx].detach().numpy()) < TOL, \
                 f"Assertion failed for batch {idx+1}, key {key}. Graph result: {_value}, Engine result: {engine_out.get(key)[idx].detach().numpy()}"
-        log.info (f"Test for batch {idx+1} passed!")
+        log.info(f"Test for batch {idx+1} passed!")
         graph.reset()

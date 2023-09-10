@@ -39,28 +39,7 @@ class GeneticOptimizer:
 
 
     def _initialize_individual(self) -> SphericalEngine:
-        adjacency_dict:AdjacencyDictType = {}
-        for i in range(self._input_size):
-            potential_output_nodes = range(self._input_size, self._input_size + self._output_size)
-            num_connections = random.randint(1, self._output_size)
-            selected_output_nodes = random.sample(potential_output_nodes, num_connections)
-            adjacency_dict[i] = {output: float32(random.uniform(-1, 1)) for output in selected_output_nodes}
-        for i in range(self._input_size, self._input_size + self._output_size):
-            adjacency_dict[i] = {}            
-        
-        biases:BiasesType = {node: float32(0.0) for node in adjacency_dict.keys()}
-        available_activations = list(FUNCTION_MAP.values())
-        activations = {node: random.choice(available_activations) for node in adjacency_dict.keys()}
-        individual:SphericalEngine = SphericalEngine(
-            adjacency_dict=adjacency_dict,
-            activations=activations,
-            biases=biases,
-            output_node_ids=self._output_node_ids,
-            input_node_ids=self._input_node_ids,
-            stateful=self._stateful,
-            max_steps=self._max_steps
-        )
-        return individual
+        return SphericalEngine.from_node_ids(self._input_node_ids, self._output_node_ids)
     
     
     def _initialize_population(self) -> list[SphericalEngine]:

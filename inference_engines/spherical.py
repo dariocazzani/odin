@@ -1,9 +1,11 @@
-import inspect
 from collections import deque, defaultdict
-from typing import Callable
 import random
 
 import graphviz #type: ignore
+
+from inference_engines.graph_elements import Node
+from inference_engines.graph_elements import Edge
+from inference_engines.ops import FUNCTION_MAP
 
 from inference_engines.ops import sigmoid
 from inference_engines.ops import tanh
@@ -13,104 +15,7 @@ from inference_engines.ops import identity
 from interfaces.custom_types import AdjacencyDictType
 from interfaces.custom_types import BiasesType
 from interfaces.custom_types import ActivationsType
-from interfaces.custom_types import Float32, float32
-
-class Node:
-    def __init__(
-            self,
-            label:int,
-            activation:Callable,
-            state=float32(0.),
-            bias=float32(0.)
-    ) -> None:
-                
-        self._label:int = label
-        self._state:Float32 = state
-        self._bias:Float32 = bias
-        self._pre_fire:Float32 = float32(0.)
-        self._activation:Callable = activation
-        self._validate_activation()
-        self._outgoing_edges:list[Edge] = []
-
-    def _validate_activation(self):
-        if not callable(self._activation):
-            raise ValueError("activation must be a callable function")
-
-        sig = inspect.signature(self._activation)
-        if len(sig.parameters) != 1:
-            raise ValueError("activation must be a unary function")
-        try:
-            result = self._activation(float32(1.0))
-            if not result.dtype.name == 'float32':
-                raise ValueError("activation must return a float32")
-        except Exception as exc:
-            raise ValueError(f'activation must be able to handle float inputs\n{exc}') from exc
-
-    @property
-    def label(self):
-        return self._label
-
-    @property
-    def state(self):
-        return self._state
-    
-    def set_state(self, value):
-        self._state = value
-    
-    @property
-    def bias(self):
-        return self._bias
-
-    def set_bias(self, value):
-        self._bias = value
-        
-    def add_edge(self, edge):
-        self._outgoing_edges.append(edge)
-
-    def add_input(self, value:Float32):
-        self._pre_fire += value
-
-    # Fire!
-    def compute_activation(self):
-        self._state += self._pre_fire
-        self._state += self.bias
-        self._state = self._activation(self._state)
-        self._pre_fire = float32(0.)
-
-    @property
-    def outgoing_edges(self):
-        return self._outgoing_edges
-
-    def __str__(self):
-        return f"Node(label={self._label}, state={self._state:.5f}, bias={self._bias:.5f})"
-
-
-class Edge:
-    def __init__(self, start_node:Node, end_node:Node, weight:Float32):
-        self._start_node = start_node
-        self._end_node = end_node
-        self._weight = weight
-        self._start_node.add_edge(self)
-        self._id = f"{start_node.label}_{end_node.label}"  # Unique label for each edge
-        
-    @property
-    def id(self):
-        return self._id
-    
-    @property
-    def start_node(self):
-        return self._start_node
-
-    @property
-    def end_node(self):
-        return self._end_node
-
-    @property
-    def weight(self) -> Float32:
-        return self._weight
-
-    def __str__(self):
-        return f"Edge(start={self._start_node.label}, end={self._end_node.label}, weight={self._weight})"
+from interfaces.custom_types import float32
 
 
 class SphericalEngine:
@@ -133,11 +38,11 @@ class SphericalEngine:
         self._stateful = stateful
         self._max_steps = max_steps
         
+        self._validate_inputs()
+        
         # Variables used for compilations
         self._queues_by_step:dict[int, deque] = {}
         
-        self._validate_inputs()
-
         self._nodes = {label: Node(label, activation=act) for label, act in activations.items()}
         self._edges = []
         self._current_queue:deque[Edge] = deque()
@@ -145,15 +50,43 @@ class SphericalEngine:
         self._active_nodes:deque[Node] = deque()
         self._energy:int | None = None
 
-        # biases
         for node_id, value in biases.items():
             if node_id in self._nodes:
-                self._nodes[node_id].set_bias(float32(value))  # Explicitly set as float32
-    
-        # Edges with weights
+                self._nodes[node_id].set_bias(value)
         for start_label, connections in adjacency_dict.items():
             for end_label, weight in connections.items():
-                self._edges.append(Edge(self._nodes[start_label], self._nodes[end_label], float32(weight)))  # Explicitly set as float32
+                self._edges.append(Edge(self._nodes[start_label], self._nodes[end_label], weight))
+
+
+    @classmethod
+    def from_node_ids(cls, input_node_ids: set[int], output_node_ids: set[int]) -> 'SphericalEngine':
+        # Assign random connections between inputs and outputs
+        adjacency_dict: AdjacencyDictType = {}
+        input_size = len(input_node_ids)
+        output_size = len(output_node_ids)
+        
+        for i in range(input_size):
+            potential_output_nodes = range(input_size, input_size + output_size)
+            num_connections = random.randint(1, output_size)
+            selected_output_nodes = random.sample(potential_output_nodes, num_connections)
+            adjacency_dict[i] = {output: float32(random.uniform(-1, 1)) for output in selected_output_nodes}
+            
+        for i in range(input_size, input_size + output_size):
+            adjacency_dict[i] = {}            
+            
+        biases: BiasesType = {node: float32(0.0) for node in adjacency_dict.keys()}
+        available_activations = list(FUNCTION_MAP.values())
+        activations: ActivationsType = {node: random.choice(available_activations) for node in adjacency_dict.keys()}
+
+        return cls(
+            adjacency_dict=adjacency_dict,
+            activations=activations,
+            biases=biases,
+            output_node_ids=output_node_ids,
+            input_node_ids=input_node_ids,
+            stateful=False,
+            max_steps=6
+        )
 
 
     def _validate_inputs(self) -> None:
@@ -171,22 +104,16 @@ class SphericalEngine:
 
     
     @property
-    def input_node_ids(self) -> set:
-        return self._input_node_ids
-    
+    def input_node_ids(self) -> set: return self._input_node_ids
     
     @property
-    def output_node_ids(self) -> set:
-        return self._output_node_ids
-    
+    def output_node_ids(self) -> set: return self._output_node_ids
     
     @property
-    def activations(self) -> dict:
-        return self._activations
+    def activations(self) -> dict: return self._activations
 
     @property
-    def queues_by_step(self) -> dict:
-        return self._queues_by_step
+    def queues_by_step(self) -> dict: return self._queues_by_step
 
     
     def _ensure_energy(self) -> None:
@@ -206,15 +133,6 @@ class SphericalEngine:
     
     
     def add_input_ids(self, new_ids: set[int]) -> bool:
-        """
-        Adds new input node IDs to the Graph.
-
-        Args:
-        - new_ids (set[int]): The set of new input node IDs.
-
-        Returns:
-        - bool: True if successfully added, False otherwise.
-        """
         adjacency_keys = set(self._adjacency_dict.keys())
         if not new_ids.issubset(adjacency_keys):
             return False
@@ -223,15 +141,6 @@ class SphericalEngine:
     
 
     def add_output_ids(self, new_ids: set[int]) -> bool:
-        """
-        Adds new output node IDs to the Graph.
-
-        Args:
-        - new_ids (set[int]): The set of new output node IDs.
-
-        Returns:
-        - bool: True if successfully added, False otherwise.
-        """
         adjacency_keys = set(self._adjacency_dict.keys())
         if not new_ids.issubset(adjacency_keys):
             return False
@@ -319,6 +228,7 @@ class SphericalEngine:
         
         return output_nodes
 
+
     def visualize(self, node_names:dict={}) -> None:
         dot = graphviz.Digraph()
         
@@ -337,7 +247,7 @@ class SphericalEngine:
                 node_name = f"Name: {node_name}"
             dot.node(
                 f"{node}",
-                label = f"ID = {node}\nActivation: {activation_function}\nbias: {bias}\n{node_name}",
+                label = f"ID = {node}\nActivation: {activation_function}\nbias: {bias:.4f}\n{node_name}",
                 style='filled',
                 fillcolor=node_color
             )
