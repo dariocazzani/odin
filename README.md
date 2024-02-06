@@ -27,6 +27,6 @@ python3.11 -m pip install https://github.com/dariocazzani/odin.git
 
 ### Check that everything looks good
 ```bash
-chmod +x initialize.sh
-source initialize.sh
+chmod +x installation_check.sh
+source installation_check.sh
 ```
