@@ -1,12 +1,17 @@
 import numpy as np
 
-from inference_engines.spherical import SphericalEngine
-from inference_engines.ops import sigmoid
-from inference_engines.ops import tanh
-from inference_engines.ops import relu
-from inference_engines.ops import identity
-from interfaces.custom_types import AdjacencyDictType
-from interfaces.custom_types import float32, Float32
+from odin.inference_engines.ops import (
+    identity,
+    relu,
+    sigmoid,
+    tanh
+)
+from odin.inference_engines.spherical import SphericalEngine
+from odin.interfaces.custom_types import (
+    AdjacencyDictType,
+    Float32,
+    float32
+)
 np.random.seed(53)
 
 TOL = 1E-6
@@ -23,7 +28,7 @@ def test_behavior_1() -> None:
     input_values = {0: input_a}
     node_0_activation = activations.get(0, callable)
     node_1_activation = activations.get(1, callable)
-    
+
     graph = SphericalEngine(
         adjacency_dict=adjacency_dict,
         activations=activations,
@@ -36,13 +41,13 @@ def test_behavior_1() -> None:
     energy = graph.energy
     assert energy == 1
     assert abs(output_nodes.get(1, 0.) - node_1_activation(weight_0_1 * node_0_activation(input_a))) < TOL
-    
+
 
 def test_behavior_2() -> None:
     weights_vector = np.random.randn(3).astype(Float32)
     inputs_vectors = np.random.randn(3).astype(Float32)
     activations = {0: identity, 1: identity, 2: identity, 3: tanh}
-    
+
     adjacency_dict:AdjacencyDictType = {
         0: {3: weights_vector[0]},
         1: {3: weights_vector[1]},
@@ -55,7 +60,7 @@ def test_behavior_2() -> None:
                     2: inputs_vectors[2]
     }
     biases = {node: float32(0.) for node in adjacency_dict.keys()}
-    
+
     graph = SphericalEngine(
         adjacency_dict=adjacency_dict,
         activations=activations,
@@ -66,14 +71,14 @@ def test_behavior_2() -> None:
         max_steps=6)
     output_nodes = graph.inference(verbose=True, input_values=input_values)
     assert abs(output_nodes.get(3, 0.0) - tanh(np.dot(weights_vector, inputs_vectors))) < TOL
-    
-    
+
+
 def test_behavior_3() -> None:
     weights_vector1 = np.random.randn(3)
     weights_vector2 = np.random.randn(2)
     weights_vector3 = np.random.randn(2)
     inputs_vectors = np.random.randn(3)
-    
+
     activations = {0: identity, 1: identity, 2: identity, 3: relu, 4: relu, 5: tanh}
     adjacency_dict:AdjacencyDictType = {
         0: {3: weights_vector1[0]},
@@ -102,17 +107,17 @@ def test_behavior_3() -> None:
     energy = graph.energy
     assert energy == 7
     output_value = output_nodes.get(5, 0.0)
-    
+
     node_3_activation = activations.get(3, callable)
     node_4_activation = activations.get(4, callable)
     node_5_activation = activations.get(5, callable)
-    
+
     layer_3 = node_3_activation(np.dot(inputs_vectors, weights_vector1))
     layer_4 = node_4_activation(np.dot(inputs_vectors[1:], weights_vector2))
     layer_3_4_vector = np.array([layer_3, layer_4])
-    
+
     assert abs(output_value - node_5_activation(np.dot(layer_3_4_vector, weights_vector3))) < TOL
-    
+
 
 def test_behavior_4() -> None:
     weight_0_1 = float32(np.random.randn())
@@ -120,7 +125,7 @@ def test_behavior_4() -> None:
     weight_1_2 = float32(np.random.randn())
     weight_1_3 = float32(np.random.randn())
     weight_2_3 = float32(np.random.randn())
-    
+
     activations = {0: tanh, 1: relu, 2: sigmoid, 3: identity}
     adjacency_dict:AdjacencyDictType = {
         0: {1: weight_0_1, 2: weight_0_2},
@@ -128,9 +133,9 @@ def test_behavior_4() -> None:
         2: {3: weight_2_3},
         3: {}
     }
-    
+
     biases = {node: float32(0.) for node in adjacency_dict.keys()}
-    input_values = {0: float32(np.random.randn())} 
+    input_values = {0: float32(np.random.randn())}
     graph = SphericalEngine(
         adjacency_dict=adjacency_dict,
         activations=activations,
@@ -139,12 +144,12 @@ def test_behavior_4() -> None:
         output_node_ids={3},
         stateful=True,
     )
-    
+
     output_nodes = graph.inference(verbose=True, input_values=input_values)
     energy = graph.energy
-    
+
     assert energy == 6
-    
+
     node_0_activation = activations.get(0, callable)
     node_1_activation = activations.get(1, callable)
     node_2_activation = activations.get(2, callable)
@@ -176,34 +181,34 @@ def test_behavior_5() -> None:
         output_node_ids={1},
         input_node_ids={0},
         stateful=True,
-        max_steps=6   
+        max_steps=6
     )
     output_nodes = graph.inference(verbose=True, input_values=input_values)
     energy = graph.energy
-    
+
     assert energy == 1
-    
+
     input_val = input_values.get(0, float32(0.))
     node_0_activation = activations.get(0, callable)
     node_1_activation = activations.get(1, callable)
     state_0 = node_0_activation(input_val)
-    state_1 = node_1_activation(state_0 * weight_0_1) 
+    state_1 = node_1_activation(state_0 * weight_0_1)
     assert abs(output_nodes.get(1, 0.0) - state_1) < TOL
-    
+
     # Traverse again without resetting
     output_nodes = graph.inference(verbose=True, input_values=input_values)
     state_0 = node_0_activation(state_0 + input_val)
     state_1 = node_1_activation(state_0 * weight_0_1 + state_1)
     assert abs(output_nodes.get(1, 0.0) - state_1) < TOL
-    
-    # Traverse again after resetting    
+
+    # Traverse again after resetting
     graph.reset()
     output_nodes = graph.inference(verbose=True, input_values=input_values)
     state_0 = node_0_activation(input_val)
-    state_1 = node_1_activation(state_0 * weight_0_1) 
+    state_1 = node_1_activation(state_0 * weight_0_1)
     assert abs(output_nodes.get(1, 0.0) - state_1) < TOL
-    
-    
+
+
 def test_behavior_6() -> None:
     weight_0_1 = float32(np.random.randn())
     weight_1_2 = float32(np.random.randn())
@@ -229,11 +234,11 @@ def test_behavior_6() -> None:
         stateful=True,
         max_steps=1
     )
-  
+
     graph.inference(verbose=True, input_values=input_values)
     energy = graph.energy
     assert energy == 3
-    
+
     graph = SphericalEngine(
         adjacency_dict=adjacency_dict,
         activations=activations,
@@ -246,7 +251,7 @@ def test_behavior_6() -> None:
     graph.inference(verbose=True, input_values=input_values)
     energy = graph.energy
     assert energy == 18
-    
+
     NUM_STEPS:int = 6
     graph = SphericalEngine(
         adjacency_dict=adjacency_dict,
@@ -258,18 +263,18 @@ def test_behavior_6() -> None:
         max_steps=NUM_STEPS
     )
     output_nodes = graph.inference(input_values=input_values)
-    
-    input_0 = input_values.get(0, float32(0.0)) 
-    input_1 = input_values.get(1, float32(0.0)) 
+
+    input_0 = input_values.get(0, float32(0.0))
+    input_1 = input_values.get(1, float32(0.0))
     input_2 = input_values.get(2, float32(0.0))
     node_0_activation = activations[0]
     node_1_activation = activations[1]
     node_2_activation = activations[2]
-    
+
     next_step_a = next_step_b = next_step_c = float32(0)
-    prev_step_a = node_0_activation(input_0)  
-    prev_step_b = node_1_activation(input_1)  
-    prev_step_c = node_2_activation(input_2)  
+    prev_step_a = node_0_activation(input_0)
+    prev_step_b = node_1_activation(input_1)
+    prev_step_c = node_2_activation(input_2)
 
     for _ in range(NUM_STEPS):
         # Think of the signal from node X to node Y to need some time to propagate
@@ -279,7 +284,7 @@ def test_behavior_6() -> None:
         prev_step_a = next_step_a
         prev_step_b = next_step_b
         prev_step_c = next_step_c
-        
+
     assert abs(output_nodes.get(0, 0.0) - next_step_a) < TOL
     assert abs(output_nodes.get(1, 0.0) - next_step_b) < TOL
     assert abs(output_nodes.get(2, 0.0) - next_step_c) < TOL

@@ -1,17 +1,20 @@
 from typing import Callable
-from optimizers.mutator import Mutator
-from inference_engines.ops import identity
-from interfaces.custom_types import AdjacencyDictType
-from interfaces.custom_types import float32
 
-TOL = 1e-5  
+from odin.inference_engines.ops import identity
+from odin.interfaces.custom_types import (
+    AdjacencyDictType,
+    float32
+)
+from odin.optimizers.mutator import Mutator
+
+TOL = 1e-5
 
 def create_sample_data() -> tuple:
     adj_dict:AdjacencyDictType = {0: {1: float32(0.5)}, 1: {2: float32(0.3)}, 2: {}}
     biases = {0: 0.2, 1: 0.3, 2: 0.4}
     activations:dict[int, Callable] = {0: identity, 1: identity, 2: identity}
     input_nodes = {0}
-    output_nodes = {2}    
+    output_nodes = {2}
     return adj_dict, biases, activations, input_nodes, output_nodes
 
 
@@ -42,12 +45,12 @@ def test_modify_activations() -> None:
     for node, original_func in activations.items():
         assert modified_activations[node] in Mutator.available_activations
         assert modified_activations[node] != original_func
-        
+
 
 def test_add_node() -> None:
     adj_dict, biases, activations, _, _ = create_sample_data()
     Mutator.set_add_node_prob(1.0)
-    modified_adj_dict, modified_biases, modified_activations = Mutator.add_node(adj_dict.copy(), biases.copy(), activations.copy())  
+    modified_adj_dict, modified_biases, modified_activations = Mutator.add_node(adj_dict.copy(), biases.copy(), activations.copy())
     assert len(modified_adj_dict) == len(adj_dict) + 1
     assert len(modified_biases) == len(biases) + 1
     assert len(modified_activations) == len(activations) + 1
@@ -74,7 +77,7 @@ def test_remove_connection() -> None:
 def test_remove_node() -> None:
     adj_dict, biases, activations, input_nodes, output_nodes = create_sample_data()
     Mutator.set_remove_node_prob(1.0)
-    modified_adj_dict, modified_biases, modified_activations = Mutator.remove_node(adj_dict.copy(), biases.copy(), activations.copy(), input_nodes, output_nodes)    
+    modified_adj_dict, modified_biases, modified_activations = Mutator.remove_node(adj_dict.copy(), biases.copy(), activations.copy(), input_nodes, output_nodes)
     assert len(modified_adj_dict) == len(adj_dict) - 1
     assert len(modified_biases) == len(biases) - 1
     assert len(modified_activations) == len(activations) - 1
