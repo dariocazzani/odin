@@ -1,11 +1,15 @@
 from typing import Callable
+
 import torch
 import torch.nn as nn
-from inference_engines.ops import activation_mapping
-from inference_engines.spherical import SphericalEngine
-from interfaces.custom_types import AdjacencyDictType
-from interfaces.custom_types import BiasesType
-from interfaces.custom_types import ActivationsType
+from odin.inference_engines.ops import activation_mapping
+from odin.inference_engines.spherical import SphericalEngine
+from odin.interfaces.custom_types import (
+    ActivationsType,
+    AdjacencyDictType,
+    BiasesType
+)
+
 
 class DynamicSphericalTorch(nn.Module):
     def __init__(
@@ -18,7 +22,7 @@ class DynamicSphericalTorch(nn.Module):
         stateful:bool,
         max_steps:int=6,
     ) -> None:
-            
+
         super(DynamicSphericalTorch, self).__init__()
 
         self._adjacency_dict = adjacency_dict
@@ -28,13 +32,13 @@ class DynamicSphericalTorch(nn.Module):
         self._input_node_ids = input_node_ids
         self._stateful = stateful
         self._max_steps = max_steps
-        
+
         self._initialize_activations_torch(activations, activation_mapping)
-        
+
         # Compile operations
         self._spherical_engine = self._init_spherical_engine()
         self._edges_by_step, self._energy = self._spherical_engine.compile()
-        
+
         self._layers = nn.ModuleDict()
         self._biases_torch = nn.ParameterDict()
         self._states = {}
@@ -57,13 +61,13 @@ class DynamicSphericalTorch(nn.Module):
                 layer = nn.Linear(1, 1, bias=False)
                 layer.weight.data.fill_(float(weight))
                 self._layers[layer_name] = layer
-        
+
         # Initialize the state of each node of the network
         # TODO: <2023-08-26> make it possible to load states
         for node_id in adjacency_dict.keys():
             self._states[node_id] = torch.zeros(1,1)
-                
-    
+
+
     def _init_spherical_engine(self) -> SphericalEngine:
         return SphericalEngine(
             adjacency_dict=self._adjacency_dict,
@@ -74,7 +78,7 @@ class DynamicSphericalTorch(nn.Module):
             stateful=self._stateful,
             max_steps=self._max_steps
         )
-        
+
     def _initialize_activations_torch(self, activations: ActivationsType, activation_mapping: dict[Callable, Callable]):
         self._activations_torch = {}
         for key, func in activations.items():
@@ -82,23 +86,23 @@ class DynamicSphericalTorch(nn.Module):
                 self._activations_torch[key] = activation_mapping[func]
             else:
                 raise ValueError(f"Unknown activation function: {func}")
-            
-            
+
+
     def reset(self):
         for node_id in self._adjacency_dict.keys():
             self._states[node_id] = torch.zeros(1,1)
 
-    
+
     def forward(self, x:torch.Tensor) -> dict:
         # Loop through each input and apply the corresponding layer, bias, and activation
         for input_id in self._input_node_ids:
             slice_x = x[:, input_id].unsqueeze(1)  # Shape [batch_size, 1]
             activation = self._activations_torch.get(input_id, lambda x: x)
             bias = self._biases_torch.get(str(input_id), 0.0)
-            
+
             output = self._layers[f"-1_{input_id}"](slice_x)
             output = activation(output + bias + self._states[input_id])
-            
+
             self._states[input_id] = output
         for step, next_edge in self._edges_by_step.items():
             if step < 0: continue

@@ -1,6 +1,11 @@
 import inspect
 from typing import Callable
-from interfaces.custom_types import Float32, float32
+
+from odin.interfaces.custom_types import (
+    Float32,
+    float32
+)
+
 
 class Node:
     def __init__(
@@ -10,7 +15,7 @@ class Node:
             state=float32(0.),
             bias=float32(0.)
     ) -> None:
-                
+
         self._label:int = label
         self._state:Float32 = state
         self._bias:Float32 = bias
@@ -39,14 +44,14 @@ class Node:
 
     @property
     def state(self): return self._state
-    
+
     def set_state(self, value): self._state = value
-    
+
     @property
     def bias(self): return self._bias
 
     def set_bias(self, value): self._bias = value
-        
+
     def add_edge(self, edge): self._outgoing_edges.append(edge)
 
     def add_input(self, value:Float32): self._pre_fire += value
@@ -54,7 +59,7 @@ class Node:
     @property
     def outgoing_edges(self):
         return self._outgoing_edges
-    
+
     # Fire!
     def compute_activation(self):
         self._state += self._pre_fire
@@ -74,10 +79,10 @@ class Edge:
         self._weight = weight
         self._start_node.add_edge(self)
         self._id = f"{start_node.label}_{end_node.label}"  # Unique label for each edge
-        
+
     @property
     def id(self): return self._id
-    
+
     @property
     def start_node(self): return self._start_node
 
