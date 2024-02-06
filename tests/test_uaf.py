@@ -1,8 +1,15 @@
 import numpy as np
 import torch
-from inference_engines.ops import UAF
-from inference_engines.ops import UAF_Torch
-from interfaces.custom_types import float32, Float32
+
+from odin.inference_engines.ops import (
+    UAF,
+    UAF_Torch
+)
+from odin.interfaces.custom_types import (
+    Float32,
+    float32
+)
+
 
 def test_relu():
     uaf = UAF()
@@ -26,7 +33,7 @@ def test_call():
                       - np.log1p(np.exp(-np.abs(uaf.D * (input_val - uaf.B)))) \
                       + uaf.E
     assert uaf(input_val) == expected_output
-    
+
 def test_consistency():
     uaf = UAF()
     uaf_torch = UAF_Torch()

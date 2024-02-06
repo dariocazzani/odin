@@ -1,9 +1,9 @@
 import random
 import numpy as np
-from inference_engines.spherical import SphericalEngine
-from logger import ColoredLogger
-from optimizers.mutator import Mutator
-from interfaces.custom_types import float32
+from odin.inference_engines.spherical import SphericalEngine
+from odin.logger import ColoredLogger
+from odin.optimizers.mutator import Mutator
+from odin.interfaces.custom_types import float32
 
 log = ColoredLogger("GeneticOptimizer").get_logger()
 
@@ -23,7 +23,7 @@ class GeneticOptimizer:
         self._stateful = stateful
         self._max_steps = max_steps
         self._envs = envs
-        
+
         self._elitism_count:int = int(self._population_size * 0.2)
 
         self._input_size:int = envs.observation_space.shape[-1]
@@ -36,8 +36,8 @@ class GeneticOptimizer:
 
     def _initialize_individual(self) -> SphericalEngine:
         return SphericalEngine.from_node_ids(self._input_node_ids, self._output_node_ids)
-    
-    
+
+
     def _initialize_population(self) -> list[SphericalEngine]:
         """
         Initializes a population of the given size using initialize_individual.
@@ -52,11 +52,11 @@ class GeneticOptimizer:
         """
         Computes the fitness of all individuals in the population using a vectorized environment.
         The fitness is computed as the average reward over multiple episodes.
-        """        
+        """
         total_rewards = np.zeros(len(population), dtype=float)
 
         for episode in range(num_episodes):
-            # Reset each individual at the beginning of each episode 
+            # Reset each individual at the beginning of each episode
             # NOTE: Do not reset during the episodes
             [individual.reset() for individual in population if self._stateful]
 
@@ -70,7 +70,7 @@ class GeneticOptimizer:
                 all_dones = all_dones | dones | truncation
 
                 episode_rewards[~all_dones] += batch_rewards[~all_dones]
-                
+
                 # Only update observations for active environments
                 observations = new_observations
 
@@ -138,16 +138,16 @@ class GeneticOptimizer:
         """
         Replaces the old population with the new population.
         """
-        
+
         combined = list(zip(new_population, fitnesses))
         sorted_combined = sorted(combined, key=lambda x: x[1], reverse=True)
         sorted_population, _ = zip(*sorted_combined)
-        
+
         elites = sorted_population[:self._elitism_count]
         final_population:list[SphericalEngine] = elites + sorted_population[self._elitism_count:self._population_size] #type: ignore
         self._population = final_population
-        
-        
+
+
     def roulette_selection(self, fitnesses:list[float]) -> list[SphericalEngine]:
         """
         Select individuals from the current population based on their fitnesses using roulette wheel selection.
@@ -176,7 +176,7 @@ class GeneticOptimizer:
     #     Main loop to run the genetic algorithm.
     #     """
     #     for generation in range(max_generations):
-            
+
     #         # Calculate fitness of the current population
     #         fitness_values = self.compute_fitness()
 
@@ -195,31 +195,31 @@ class GeneticOptimizer:
     #             new_population.extend([child1, child2])
 
     #         self.replace_population(new_population)
-            
+
 
     def optimize(self, max_generations:int) -> SphericalEngine:
         best_individual:SphericalEngine = self._population[0]
-        best_fitness = -np.inf  
+        best_fitness = -np.inf
         for generation in range(max_generations):
             fitness_values = self.compute_fitness(self._population)
             max_fitness_gen = np.max(fitness_values)
             avg_fitness = np.mean(fitness_values)
-            
+
             if max_fitness_gen > best_fitness:
                 best_fitness = max_fitness_gen
                 best_idx = np.argmax(fitness_values)
                 best_individual = self._population[best_idx]
-            
+
             log.info(f"Generation {generation + 1}/{max_generations}: Max Fitness: {max_fitness_gen:.2f}, Avg Fitness: {avg_fitness:.2f}")
-            
+
             new_pop:list[SphericalEngine] = self.roulette_selection(fitness_values)
-            
+
             for idx, individual in enumerate(new_pop):
                 mutated_individual = self.mutate(individual)
                 new_pop[idx] = mutated_individual
 
             total_population = self._population + new_pop
-            total_fitness = fitness_values + self.compute_fitness(new_pop)            
+            total_fitness = fitness_values + self.compute_fitness(new_pop)
             sorted_indices = np.argsort(total_fitness)[::-1]
             self._population = [total_population[i] for i in sorted_indices[:self._population_size]]
 

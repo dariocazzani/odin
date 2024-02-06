@@ -1,12 +1,16 @@
 
 import random
+
 import numpy as np
-from inference_engines.ops import FUNCTION_MAP
-from interfaces.custom_types import AdjacencyDictType
-from interfaces.custom_types import BiasesType
-from interfaces.custom_types import ActivationsType
-from interfaces.custom_types import float32
-from logger import ColoredLogger
+
+from odin.inference_engines.ops import FUNCTION_MAP
+from odin.interfaces.custom_types import (
+    ActivationsType,
+    AdjacencyDictType,
+    BiasesType,
+    float32,
+)
+from odin.logger import ColoredLogger
 
 log = ColoredLogger("Mutator").get_logger()
 
@@ -42,8 +46,8 @@ class Mutator:
     @classmethod
     def set_remove_node_prob(cls, prob: float):
         cls.remove_node_prob = prob
-    
-        
+
+
     @staticmethod
     def modify_weights(adjacency_dict: AdjacencyDictType) -> AdjacencyDictType:
         modified_dict = {key: value.copy() for key, value in adjacency_dict.items()}
@@ -60,7 +64,7 @@ class Mutator:
         modified_biases = biases.copy()
         for node_id in modified_biases:
             if random.random() < Mutator.mutation_prob:
-                modified_biases[node_id] += random.uniform(-Mutator.weight_mutation_amount, Mutator.weight_mutation_amount)        
+                modified_biases[node_id] += random.uniform(-Mutator.weight_mutation_amount, Mutator.weight_mutation_amount)
         return modified_biases
 
 
@@ -73,7 +77,7 @@ class Mutator:
             else:
                 new_activations[node_id] = activations[node_id]
         return new_activations
-    
+
     @staticmethod
     def add_node(adjacency_dict: AdjacencyDictType, biases: BiasesType, activations: ActivationsType) -> tuple:
         modified_adjacency_dict = {k: v.copy() for k, v in adjacency_dict.items()}
@@ -119,7 +123,7 @@ class Mutator:
                 break
         return modified_adjacency_dict
 
-    
+
     @staticmethod
     def remove_connection(adjacency_dict: AdjacencyDictType) -> AdjacencyDictType:
         modified_adjacency_dict = {k: v.copy() for k, v in adjacency_dict.items()}

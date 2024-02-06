@@ -10,38 +10,23 @@ ODIN is ...
 - Python 3.10 or newer
 - Git (for cloning the repository)
 
-## Installation Steps
+## Installation
 
-### 1. Clone the Repository
-
-First, clone the repository to your local machine:
-
-```bash
-git clone https://github.com/dariocazzani/odin.git
+### From source
+```sh
+git clone git@github.com:dariocazzani/odin.git
 cd odin
+python3.11 -m pip install -e .
 ```
 
-### 2. Set Up Python Environment
+### Direct (main)
+```sh
+python3.11 -m pip install https://github.com/dariocazzani/odin.git
+```
 
-Create a Python virtual environment using Python 3.10 or newer:
 
+### Check that everything looks good
 ```bash
-python3 -m venv .odin_venv
-source .odin_venv/bin/activate
+chmod +x installation_check.sh
+source installation_check.sh
 ```
-
-### 3. Install Dependencies
-Install the required packages from **requirements.txt**:
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Run Initialization Script
-```bash
-chmod +x initialize.sh
-source initialize.sh
-```
-
-This will set up the `PYTHONPATH` and perform some initial checks.
-

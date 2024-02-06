@@ -1,9 +1,23 @@
+import numpy as np
 import pytest
 import torch
-import numpy as np
-from inference_engines.ops import sigmoid_torch, relu_torch, tanh_torch, identity_torch, elu_torch
-from inference_engines.ops import sigmoid, relu, tanh, identity, elu
-from interfaces.custom_types import float32, Float32
+
+from odin.inference_engines.ops import (
+    elu,
+    elu_torch,
+    identity,
+    identity_torch,
+    relu,
+    relu_torch,
+    sigmoid,
+    sigmoid_torch,
+    tanh,
+    tanh_torch,
+)
+from odin.interfaces.custom_types import (
+    Float32,
+    float32
+)
 
 np.random.seed(53)
 @pytest.mark.parametrize("activation_torch, activation_numpy", [
