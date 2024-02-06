@@ -1,12 +1,16 @@
 
 import random
+
 import numpy as np
+
 from odin.inference_engines.ops import FUNCTION_MAP
-from odin.interfaces.custom_types import AdjacencyDictType
-from odin.interfaces.custom_types import BiasesType
-from odin.interfaces.custom_types import ActivationsType
-from odin.interfaces.custom_types import float32
-from logger import ColoredLogger
+from odin.interfaces.custom_types import (
+    ActivationsType,
+    AdjacencyDictType,
+    BiasesType,
+    float32,
+)
+from odin.logger import ColoredLogger
 
 log = ColoredLogger("Mutator").get_logger()
 
