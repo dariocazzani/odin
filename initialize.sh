@@ -28,40 +28,6 @@ if [ -z "$VIRTUAL_ENV" ]; then
     exit 1
 fi
 
-# Check if the user is in a folder called 'odin'
-current_folder=$(basename "$PWD")
-if [ "$current_folder" != "odin" ]; then
-    print_error "You are not in a folder called 'odin'. Please navigate to the correct folder."
-    exit 1
-fi
-
-# Check if 'run.py' exists in the current folder
-if [ ! -f "run.py" ]; then
-    print_error "'run.py' does not exist in the current folder. Make sure you are in the correct directory."
-    exit 1
-fi
-
-# Set PYTHONPATH
-export PYTHONPATH=$(pwd)
-echo "PYTHONPATH has been set to: $PYTHONPATH"
-
-# Check if pre-commit is installed, and install it if not
-if ! command -v pre-commit &> /dev/null; then
-    echo "Installing pre-commit package..."
-    pip install pre-commit
-else
-    print_success "pre-commit is already installed."
-fi
-
-# Check if pre-commit hooks are installed, and install them if not
-if [ ! -f ".git/hooks/pre-commit" ]; then
-    print_warning "Installing pre-commit hooks..."
-    pre-commit install -f
-else
-    print_success "pre-commit hooks are already installed."
-fi
-
-
 # Run tests
 echo "Running tests..."
 pytest tests/
